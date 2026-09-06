@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http.response import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import ClientSignupForm, StoreForm
-from .models import Client, Commune
+from .models import Client, Commune, Store
 from django.http import JsonResponse
 from clients.backends import EmailBackend
 
