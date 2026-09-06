@@ -32,13 +32,15 @@ class ClientSignupForm(forms.Form):
 class StoreForm(forms.ModelForm):
     class Meta:
         model = Store
-        fields = ['name', 'address_line1', 'wilaya', 'comune', 'phone']
+        fields = ['name', 'address_line1', 'wilaya', 'comune', 'phone', 'rc', 'nif']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Store name'}),
             'address_line1': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Address'}),
             'wilaya': forms.Select(attrs={'class': 'form-select', 'id': 'id_wilaya'}),
             'comune': forms.Select(attrs={'class': 'form-select', 'id': 'id_comune'}),
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone (optional)'}),
+            'rc': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'nif': forms.TextInput(attrs={'class': 'form-control'})
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

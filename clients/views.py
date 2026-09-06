@@ -77,10 +77,11 @@ def client_dashboard_page(request, username):
             return redirect('client_dashboard_page', username=username)
 
         elif form_type == 'add_store':
-            form = StoreForm(request.POST)
+            form = StoreForm(request.POST, request.FILES)
             if form.is_valid():
                 store = form.save(commit=False)
                 store.client = client
+                store.active_status = False
                 store.save()
                 return redirect('client_dashboard_page', username=username)
 
@@ -92,8 +93,15 @@ def client_dashboard_page(request, username):
             store.save()
             return redirect('client_dashboard_page', username=username)
 
+    context = {
+    'active_stores': Store.objects.filter(client=client, active_status=True),
+    'pending_stores': Store.objects.filter(client=client, active_status=False),
+    }
+
     return render(request, 'clients/client_dashboard_page.html', {
         'client': client,
         'stores': stores,
         'form': form,
+        'active_stores': context['active_stores'],
+        'pending_stores': context['pending_stores'],
     })

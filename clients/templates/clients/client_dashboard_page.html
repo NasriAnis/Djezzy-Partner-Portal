@@ -53,12 +53,10 @@
     <section id="stores" class="mb-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="mb-0">My Stores</h2>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#storeModal">
-                + Add Store
-            </button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#storeModal"> + Add Store </button>
         </div>
 
-        {% if stores %}
+        {% if active_stores %}
         <div class="card bg-body-tertiary border-secondary">
             <div class="table-responsive">
                 <table class="table table-dark table-hover align-middle mb-0">
@@ -74,7 +72,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for store in stores %}
+                        {% for store in active_stores %}
                         <tr>
                             <td>{{ store.name }}</td>
                             <td>{{ store.address_line1 }}</td>
@@ -103,6 +101,48 @@
         {% else %}
         <div class="text-center py-5 text-secondary border border-secondary rounded-3">
             <p class="mb-0">You haven't added any stores yet.</p>
+        </div>
+        {% endif %}
+    </section>
+    
+    <!-- ============ UNDER REVIEW STORES SECTION ============ -->
+    <section id="under_review_stores" class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Under Review Stores</h2>
+        </div>
+
+        {% if pending_stores %}
+        <div class="card bg-body-tertiary border-secondary">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Address</th>
+                            <th>Wilaya</th>
+                            <th>Commune</th>
+                            <th>Phone</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for store in pending_stores %}
+                        <tr>
+                            <td>{{ store.name }}</td>
+                            <td>{{ store.address_line1 }}</td>
+                            <td>{{ store.get_wilaya_display }}</td>
+                            <td>{{ store.comune.name }}</td>
+                            <td class="{% if not store.phone %}text-muted{% endif %}">{{ store.phone|default:"—" }}</td>
+                            <td>{{ store.created_at|date:"d M Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-secondary border border-secondary rounded-3">
+            <p class="mb-0">You have no under review stores.</p>
         </div>
         {% endif %}
     </section>
@@ -151,7 +191,7 @@
 <div class="modal fade {% if form.errors %}show{% endif %}" id="storeModal" tabindex="-1" aria-labelledby="storeModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content bg-body-tertiary text-light">
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="form_type" value="add_store">
                 <div class="modal-header border-secondary">
@@ -181,6 +221,20 @@
                     <div class="mb-3">
                         <label class="form-label">{{ form.phone.label }}</label>
                         {{ form.phone }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.rc.label }} <span class="text-danger">*</span></label>
+                        {{ form.rc }}
+                        {% for error in form.rc.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.nif.label }} <span class="text-danger">*</span></label>
+                        {{ form.nif }}
+                        {% for error in form.nif.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
                     </div>
                 </div>
                 <div class="modal-footer border-secondary">
