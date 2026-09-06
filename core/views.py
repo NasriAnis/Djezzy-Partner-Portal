@@ -84,6 +84,7 @@ def offer_detail_page(request, offer_slug):
                 store_tx, created = StoreOfferTransaction.objects.get_or_create(
                     store=selected_store,
                     plan=plan,
+                    approved_status=False,
                     defaults={'quantity_bought': quantity}
                 )
                 if not created:
