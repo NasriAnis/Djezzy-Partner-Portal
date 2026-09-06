@@ -51,8 +51,8 @@ class Store(models.Model):
     comune = models.ForeignKey(Commune, on_delete=models.PROTECT, related_name='stores')
     phone = models.CharField(max_length=20, blank=True)
     rc = models.ImageField(upload_to='client_rc/', default="", null=True)
-    nif = models.CharField(default="", null=True)
-    active_status = models.BooleanField()
+    nif = models.CharField(default="", null=True, max_length=20)
+    active_status = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
