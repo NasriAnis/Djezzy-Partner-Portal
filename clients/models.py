@@ -40,7 +40,7 @@ class Commune(models.Model):
         indexes = [models.Index(fields=['wilaya_code', 'name'])]
 
     def __str__(self):
-        return f"{self.name} ({self.wilaya_code()})"
+        return f"{self.name} ({self.wilaya_code})"
 
 
 class Store(models.Model):
@@ -50,6 +50,9 @@ class Store(models.Model):
     wilaya = models.CharField(max_length=2, choices=WILAYA_CHOICES)
     comune = models.ForeignKey(Commune, on_delete=models.PROTECT, related_name='stores')
     phone = models.CharField(max_length=20, blank=True)
+    rc = models.ImageField(upload_to='client_rc/', default="", null=True)
+    nif = models.CharField(default="", null=True)
+    active_status = models.BooleanField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
