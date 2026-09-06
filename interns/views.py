@@ -215,7 +215,7 @@ def commercials_offer_edit_page(request, slug):
 
 @login_required(login_url='commercials_login')
 def commercials_clients_page(request):
-    view_filter = request.GET.get('view', 'pending')
+    view_filter = request.GET.get('view', 'all')
     context = {'view_filter': view_filter}
 
     if view_filter == 'pending_offers':

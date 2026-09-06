@@ -6,17 +6,19 @@
 
 <ul class="nav nav-pills mb-4">
     <li class="nav-item">
-        <a class="nav-link {% if view_filter == 'pending' %}active{% endif %}"
-           href="{% url 'commercials_clients_page' %}?view=pending">
-            Pending Stores
-        </a>
-    </li>
-    <li class="nav-item">
         <a class="nav-link {% if view_filter == 'all' %}active{% endif %}"
            href="{% url 'commercials_clients_page' %}?view=all">
             All Clients & Stores
         </a>
     </li>
+
+    <li class="nav-item">
+        <a class="nav-link {% if view_filter == 'pending' %}active{% endif %}"
+           href="{% url 'commercials_clients_page' %}?view=pending">
+            Pending Stores
+        </a>
+    </li>
+
     <li class="nav-item">
         <a class="nav-link {% if view_filter == 'pending_offers' %}active{% endif %}"
            href="{% url 'commercials_clients_page' %}?view=pending_offers">
