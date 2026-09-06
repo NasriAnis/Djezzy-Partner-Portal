@@ -30,8 +30,9 @@ def offer_detail_page(request, offer_slug):
     quota_info = None
 
     if request.user.is_authenticated and hasattr(request.user, 'client_profile'):
-        user_stores = request.user.client_profile.locations.all()
-        
+        # Only stores that have been accepted can be selected for buying
+        user_stores = request.user.client_profile.locations.filter(active_status=True)
+
         selected_store_id = request.GET.get('store_id')
         if selected_store_id:
             selected_store = user_stores.filter(id=selected_store_id).first()
@@ -48,7 +49,14 @@ def offer_detail_page(request, offer_slug):
     # Form handling for custom quantity purchases
     if request.method == 'POST':
         if not request.user.is_authenticated or not selected_store:
-            messages.error(request, "You must select a valid store to place an order.")
+            messages.error(request, "You must select a valid, accepted store to place an order.")
+            return redirect('offer_detail_page', offer_slug=offer.slug)
+
+        # Belt-and-braces: re-check status even though selected_store was
+        # already pulled from the accepted-only queryset above, in case
+        # its status changed between page load and form submit.
+        if selected_store.status != 'accepted':
+            messages.error(request, "This store isn't approved yet — purchases aren't allowed.")
             return redirect('offer_detail_page', offer_slug=offer.slug)
 
         plan_id = request.POST.get('plan_id')
