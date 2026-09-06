@@ -1,8 +1,9 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import Sum, F, DecimalField, ExpressionWrapper
+from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count, Q
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 
 from core.models import Offer, OfferPlan, OfferQuota, WILAYA_CHOICES
 from clients.models import Client, Store, StoreOfferTransaction
@@ -208,12 +209,53 @@ def commercials_offer_edit_page(request, slug):
         'quota_form': OfferQuotaForm(),
     })
 
-
 @login_required(login_url='commercials_login')
 def commercials_clients_page(request):
-    clients = Client.objects.select_related('user').prefetch_related('locations').all()
-    return render(request, 'interns/commercials_clients_page.html', {'clients': clients})
+    view_filter = request.GET.get('view', 'pending')
 
+    clients = (
+        Client.objects
+        .select_related('user')
+        .prefetch_related('locations')
+        .annotate(
+            inactive_locations_count=Count(
+                'locations', filter=Q(locations__active_status=False)
+            )
+        )
+    )
+
+    if view_filter == 'pending':
+        clients = clients.filter(inactive_locations_count__gt=0)
+
+    clients = clients.distinct().order_by('user__date_joined')
+
+    return render(request, 'interns/commercials_clients_page.html', {
+        'clients': clients,
+        'view_filter': view_filter,
+    })
+
+@login_required(login_url='commercials_login')
+def commercials_store_detail_page(request, store_id):
+    store = get_object_or_404(
+        Store.objects.select_related('client__user', 'comune'),
+        id=store_id
+    )
+    return render(request, 'interns/commercials_store_detail_page.html', {'store': store})
+
+
+@login_required(login_url='commercials_login')
+@require_POST
+def commercials_approve_store(request, store_id):
+    _, can_edit = _get_commercial(request)
+    if not can_edit:
+        messages.error(request, "You have read-only access.")
+        return redirect('commercials_store_detail_page', store_id=store_id)
+
+    store = get_object_or_404(Store, id=store_id)
+    store.active_status = True
+    store.save(update_fields=['active_status'])
+    messages.success(request, f'"{store.name}" approved.')
+    return redirect('commercials_client_detail_page', client_id=store.client_id)
 
 @login_required(login_url='commercials_login')
 def commercials_client_detail_page(request, client_id):
