@@ -21,75 +21,70 @@
 {% endfor %}
 {% endif %}
 
-<!-- ============ CATEGORIES ============ -->
-<h5 class="mb-3">Categories</h5>
-<div class="card bg-body-tertiary border-secondary mb-4">
-    <div class="table-responsive">
-        <table class="table table-dark table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Order</th>
-                    <th>Offers</th>
-                    {% if can_edit %}<th class="text-end">Actions</th>{% endif %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for category in categories %}
-                <tr>
-                    <td>{{ category.name }}</td>
-                    <td>{{ category.order }}</td>
-                    <td>{{ category.offers.count }}</td>
-                    {% if can_edit %}
-                    <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-outline-light"
-                                data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ category.id }}">
-                            Edit
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.id }}">
-                            Delete
-                        </button>
-                    </td>
-                    {% endif %}
-                </tr>
-                {% empty %}
-                <tr><td colspan="{% if can_edit %}4{% else %}3{% endif %}" class="text-secondary">No categories yet.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<!-- ============ CATEGORIES + NESTED OFFERS ============ -->
+{% for category in categories %}
+<div class="card bg-body-tertiary border-secondary mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center"
+         style="cursor: pointer;"
+         data-bs-toggle="collapse"
+         data-bs-target="#offersCollapse{{ category.id }}"
+         aria-expanded="false"
+         aria-controls="offersCollapse{{ category.id }}">
+        <div class="d-flex align-items-center gap-2">
+            <span class="fw-semibold">{{ category.name }}</span>
+            <span class="badge bg-secondary">{{ category.offers.count }} offer{{ category.offers.count|pluralize }}</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            {% if can_edit %}
+            <button type="button" class="btn btn-sm btn-outline-light"
+                    data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ category.id }}"
+                    onclick="event.stopPropagation();">
+                Edit
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                    data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.id }}"
+                    onclick="event.stopPropagation();">
+                Delete
+            </button>
+            {% endif %}
+            <span class="text-secondary">▾</span>
+        </div>
     </div>
-</div>
 
-<!-- ============ OFFERS ============ -->
-<h5 class="mb-3">Offers</h5>
-<div class="row g-4">
-    {% for offer in offers %}
-    <div class="col-12 col-md-6 col-lg-4">
-        <div class="card bg-body-tertiary border-secondary h-100">
-            <div class="card-body d-flex flex-column">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h5 class="card-title mb-0">{{ offer.title }}</h5>
-                    <div class="d-flex gap-1">
-                        {% if offer.is_new %}<span class="badge bg-info text-dark">New</span>{% endif %}
-                        <span class="badge {% if offer.is_active %}bg-success{% else %}bg-secondary{% endif %}">
-                            {% if offer.is_active %}Active{% else %}Inactive{% endif %}
-                        </span>
+    <div class="collapse" id="offersCollapse{{ category.id }}">
+        <div class="card-body">
+            <div class="row g-4">
+                {% for offer in category.offers.all %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card bg-body-tertiary border-secondary h-100">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0">{{ offer.title }}</h5>
+                                <div class="d-flex gap-1">
+                                    {% if offer.is_new %}<span class="badge bg-info text-dark">New</span>{% endif %}
+                                    <span class="badge {% if offer.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {% if offer.is_active %}Active{% else %}Inactive{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            <p class="text-secondary small mb-3">{{ offer.description|truncatewords:15 }}</p>
+                            <p class="text-secondary small mb-3">{{ offer.plans.count }} plan(s)</p>
+                            <a href="{% url 'commercials_offer_edit_page' offer.slug %}" class="btn btn-outline-light mt-auto">
+                                Manage Offer
+                            </a>
+                        </div>
                     </div>
                 </div>
-                <p class="text-secondary small mb-1">{{ offer.category.name }}</p>
-                <p class="text-secondary small mb-3">{{ offer.description|truncatewords:15 }}</p>
-                <p class="text-secondary small mb-3">{{ offer.plans.count }} plan(s)</p>
-                <a href="{% url 'commercials_offer_edit_page' offer.slug %}" class="btn btn-outline-light mt-auto">
-                    Manage Offer
-                </a>
+                {% empty %}
+                <p class="text-secondary mb-0">No offers in this category yet.</p>
+                {% endfor %}
             </div>
         </div>
     </div>
-    {% empty %}
-    <p class="text-secondary">No offers yet.</p>
-    {% endfor %}
 </div>
+{% empty %}
+<p class="text-secondary">No categories yet.</p>
+{% endfor %}
 
 <!-- ============ ADD CATEGORY MODAL ============ -->
 <div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
@@ -122,7 +117,7 @@
     </div>
 </div>
 
-<!-- ============ EDIT / DELETE CATEGORY MODALS (one pair per category) ============ -->
+<!-- ============ EDIT / DELETE CATEGORY MODALS ============ -->
 {% if can_edit %}
 {% for category in categories %}
 <div class="modal fade" id="editCategoryModal{{ category.id }}" tabindex="-1" aria-hidden="true">
