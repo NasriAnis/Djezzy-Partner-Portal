@@ -4,9 +4,10 @@ from django.contrib.auth.decorators import login_required
 from django.http.response import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import ClientSignupForm, StoreForm
-from .models import Client, Commune, Store
+from .models import Client, Commune, Store, StoreOfferTransaction
 from django.http import JsonResponse
 from clients.backends import EmailBackend
+from django.db.models import Prefetch
 
 def client_signup(request):
     if request.method == 'POST':
@@ -93,15 +94,18 @@ def client_dashboard_page(request, username):
             store.save()
             return redirect('client_dashboard_page', username=username)
 
-    context = {
-    'active_stores': Store.objects.filter(client=client, active_status=True),
-    'pending_stores': Store.objects.filter(client=client, active_status=False),
-    }
+    active_stores = Store.objects.filter(client=client, active_status=True).prefetch_related(
+        Prefetch(
+            'transactions',
+            queryset=StoreOfferTransaction.objects.select_related('plan__offer').order_by('-created_at')
+        )
+    )
+    pending_stores = Store.objects.filter(client=client, active_status=False)
 
     return render(request, 'clients/client_dashboard_page.html', {
         'client': client,
         'stores': stores,
         'form': form,
-        'active_stores': context['active_stores'],
-        'pending_stores': context['pending_stores'],
+        'active_stores': active_stores,
+        'pending_stores': pending_stores,
     })
