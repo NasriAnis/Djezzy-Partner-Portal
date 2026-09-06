@@ -67,6 +67,7 @@ class StoreOfferTransaction(models.Model):
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='transactions')
     plan = models.ForeignKey(OfferPlan, on_delete=models.PROTECT, related_name='store_transactions')
     quantity_bought = models.PositiveIntegerField(default=0)
+    approved_status = models.BooleanField(default=False)
     quantity_sold = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
