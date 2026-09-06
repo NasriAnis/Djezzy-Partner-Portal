@@ -1,6 +1,7 @@
 {% extends 'interns/interns_base.html' %}
 {% block title %}Clients & Stores{% endblock %}
 {% block content %}
+
 <h1 class="mb-4">Clients & Stores</h1>
 
 <ul class="nav nav-pills mb-4">
@@ -16,7 +17,58 @@
             All Clients & Stores
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link {% if view_filter == 'pending_offers' %}active{% endif %}"
+           href="{% url 'commercials_clients_page' %}?view=pending_offers">
+            Pending Offers
+        </a>
+    </li>
 </ul>
+
+{% if view_filter == 'pending_offers' %}
+
+<div class="card bg-body-tertiary border-secondary">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Store</th>
+                    <th>Offer / Plan</th>
+                    <th>Quantity Bought</th>
+                    <th>Date</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in pending_transactions %}
+                <tr>
+                    <td>{{ t.store.client.user.get_full_name|default:t.store.client.user.username }}</td>
+                    <td>{{ t.store.name }}</td>
+                    <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
+                    <td>{{ t.quantity_bought }}</td>
+                    <td>{{ t.created_at|date:"d M Y" }}</td>
+                    <td>
+                        <a href="{% url 'commercials_store_detail_page' t.store.id %}" class="btn btn-sm btn-outline-light">Store Info</a>
+                        <a href="{% url 'commercials_client_detail_page' t.store.client.id %}" class="btn btn-sm btn-outline-light">Client Info</a>
+                    </td>
+                    <td>
+                        <form method="post" action="{% url 'commercials_approve_transaction' t.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-secondary">No pending offers.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% else %}
 
 <div class="card bg-body-tertiary border-secondary">
     <div class="table-responsive">
@@ -54,4 +106,6 @@
         </table>
     </div>
 </div>
+
+{% endif %}
 {% endblock %}

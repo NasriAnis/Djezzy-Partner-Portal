@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count, Q
 from django.contrib import messages
 from django.views.decorators.http import require_POST
+from django.urls import reverse
 
 from core.models import Offer, OfferPlan, OfferQuota, WILAYA_CHOICES
 from clients.models import Client, Store, StoreOfferTransaction
@@ -59,6 +60,7 @@ def commercials_dashboard_page(request):
         'recent_stores': Store.objects.select_related('client__user').order_by('-created_at')[:5],
     }
     return render(request, 'interns/commercials_dashboard_page.html', context)
+
 
 @login_required(login_url='commercials_login')
 def commercials_offers_page(request):
@@ -118,6 +120,7 @@ def commercials_offers_page(request):
         'category_form': OfferCategoryForm(),
         'offer_form': OfferForm(),
     })
+
 
 @login_required(login_url='commercials_login')
 def commercials_offer_edit_page(request, slug):
@@ -209,30 +212,39 @@ def commercials_offer_edit_page(request, slug):
         'quota_form': OfferQuotaForm(),
     })
 
+
 @login_required(login_url='commercials_login')
 def commercials_clients_page(request):
     view_filter = request.GET.get('view', 'pending')
+    context = {'view_filter': view_filter}
 
-    clients = (
-        Client.objects
-        .select_related('user')
-        .prefetch_related('locations')
-        .annotate(
-            inactive_locations_count=Count(
-                'locations', filter=Q(locations__active_status=False)
+    if view_filter == 'pending_offers':
+        pending_transactions = (
+            StoreOfferTransaction.objects
+            .filter(approved_status=False)
+            .select_related('store__client__user', 'plan__offer')
+            .order_by('-created_at')
+        )
+        context['pending_transactions'] = pending_transactions
+
+    else:
+        clients = (
+            Client.objects
+            .select_related('user')
+            .prefetch_related('locations')
+            .annotate(
+                inactive_locations_count=Count(
+                    'locations', filter=Q(locations__active_status=False)
+                )
             )
         )
-    )
+        if view_filter == 'pending':
+            clients = clients.filter(inactive_locations_count__gt=0)
 
-    if view_filter == 'pending':
-        clients = clients.filter(inactive_locations_count__gt=0)
+        context['clients'] = clients.distinct().order_by('user__date_joined')
 
-    clients = clients.distinct().order_by('user__date_joined')
+    return render(request, 'interns/commercials_clients_page.html', context)
 
-    return render(request, 'interns/commercials_clients_page.html', {
-        'clients': clients,
-        'view_filter': view_filter,
-    })
 
 @login_required(login_url='commercials_login')
 def commercials_store_detail_page(request, store_id):
@@ -257,6 +269,7 @@ def commercials_approve_store(request, store_id):
     messages.success(request, f'"{store.name}" approved.')
     return redirect('commercials_client_detail_page', client_id=store.client_id)
 
+
 @login_required(login_url='commercials_login')
 def commercials_client_detail_page(request, client_id):
     client = get_object_or_404(Client, id=client_id)
@@ -269,3 +282,18 @@ def commercials_client_detail_page(request, client_id):
         'stores': stores,
         'transactions': transactions,
     })
+
+
+@login_required(login_url='commercials_login')
+@require_POST
+def commercials_approve_transaction(request, transaction_id):
+    _, can_edit = _get_commercial(request)
+    if not can_edit:
+        messages.error(request, "You have read-only access.")
+        return redirect('commercials_clients_page')
+
+    transaction = get_object_or_404(StoreOfferTransaction, id=transaction_id)
+    transaction.approved_status = True
+    transaction.save(update_fields=['approved_status'])
+    messages.success(request, f'Offer for "{transaction.store.name}" approved.')
+    return redirect(f"{reverse('commercials_clients_page')}?view=pending_offers")
