@@ -55,7 +55,7 @@ def offer_detail_page(request, offer_slug):
         # Belt-and-braces: re-check status even though selected_store was
         # already pulled from the accepted-only queryset above, in case
         # its status changed between page load and form submit.
-        if selected_store.status != 'accepted':
+        if selected_store.active_status != True:
             messages.error(request, "This store isn't approved yet — purchases aren't allowed.")
             return redirect('offer_detail_page', offer_slug=offer.slug)
 
