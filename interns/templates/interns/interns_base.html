@@ -6,30 +6,41 @@
     <title>{% block title %}Commercials{% endblock %}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'shared/vendor/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'shared/vendor/bootstrap/icons/font/bootstrap-icons.min.css' %}">
     <link rel="stylesheet" href="{% static 'shared/css/djezzy-theme.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="bg-dark text-light">
     <div class="d-flex" style="min-height: 100vh;">
         <!-- ============ SIDEBAR ============ -->
-        <nav class="bg-black border-end border-secondary p-3" style="width: 220px; flex-shrink: 0;">
-            <h5 class="mb-4 text-uppercase">
-                <a href="{% url 'commercials_dashboard_page' %}" class="text-decoration-none text-light">
-                    <span style="color: var(--bs-primary);">Djezzy</span> Commercial
-                </a>
-            </h5>
-            <ul class="nav nav-pills flex-column gap-1">
+        <nav class="djz-sidebar p-3" style="width: 230px; flex-shrink: 0;">
+            <a href="{% url 'commercials_dashboard_page' %}" class="djz-logo text-decoration-none mb-4 d-flex">
+                <span class="mark">
+                    <img src="{% static 'shared/icons/Djezzy_icon.png' %}" alt="Djezzy Logo">
+                </span>
+                <span>
+                    Djezzy
+                    <span class="tag">Commercial</span>
+                </span>
+            </a>
+            <ul class="nav djz-sidenav flex-column gap-1">
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.url_name == 'commercials_dashboard_page' %}active{% else %}text-light{% endif %}"
-                       href="{% url 'commercials_dashboard_page' %}">Dashboard</a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'commercials_dashboard_page' %}active{% endif %}"
+                       href="{% url 'commercials_dashboard_page' %}">
+                        <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.url_name == 'commercials_offers_page' %}active{% else %}text-light{% endif %}"
-                       href="{% url 'commercials_offers_page' %}">Offers</a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'commercials_offers_page' %}active{% endif %}"
+                       href="{% url 'commercials_offers_page' %}">
+                        <i class="bi bi-tag me-2"></i>Offers
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.url_name == 'commercials_clients_page' %}active{% else %}text-light{% endif %}"
-                       href="{% url 'commercials_clients_page' %}">Clients & Stores</a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'commercials_clients_page' %}active{% endif %}"
+                       href="{% url 'commercials_clients_page' %}">
+                        <i class="bi bi-people me-2"></i>Clients &amp; Stores
+                    </a>
                 </li>
             </ul>
             <hr class="border-secondary my-4">

@@ -5,32 +5,22 @@
 
     <!-- ============ HERO ============ -->
     <div class="hero-band mb-4">
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-            <div>
-                <h1 class="mb-2">Browse Offers</h1>
-                <p class="text-secondary mb-0" style="max-width: 480px;">
-                    Pick a plan for your store and buy directly against your wilaya's allocated quota.
-                </p>
-            </div>
-            <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#filterModal">
-                <i class="bi bi-sliders me-1"></i>Filter
-            </button>
-        </div>
+        <h1 class="mb-2">Browse Offers</h1>
+        <p class="text-secondary mb-0" style="max-width: 480px;">
+            Pick a plan for your store and buy directly against your wilaya's allocated quota.
+        </p>
     </div>
 
-    <!-- ============ CATEGORY CHIPS ============ -->
+    <!-- ============ CATEGORY FILTER ============ -->
     {% if categories %}
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        <a href="{% url 'client_index_page' %}" class="chip {% if not selected_category %}active{% endif %}"> </a>
-    </div>
-    {% endif %}
-
-    {% if selected_category %}
-    <div class="mb-3">
-        <span class="badge bg-secondary">
-            Category: {{ selected_category.name }}
-            <a href="{% url 'client_index_page' %}" class="text-light text-decoration-none ms-1">&times;</a>
-        </span>
+    <div class="chip-row mb-4">
+        <a href="{% url 'client_index_page' %}" class="chip {% if not selected_category %}active{% endif %}">All</a>
+        {% for category in categories %}
+        <a href="{% url 'client_index_page' %}?category={{ category.id }}"
+           class="chip {% if selected_category and selected_category.id == category.id %}active{% endif %}">
+            {{ category.name }}
+        </a>
+        {% endfor %}
     </div>
     {% endif %}
 
@@ -39,7 +29,7 @@
         {% for offer in offers %}
         <div class="col-12 col-md-6 col-lg-4">
             <a href="{% url 'offer_detail_page' offer.slug %}" class="text-decoration-none">
-                <div class="card card-hover bg-body-tertiary text-light h-100 border-secondary overflow-hidden">
+                <div class="card card-hover h-100 overflow-hidden">
                     {% if offer.image %}
                     <img src="{{ offer.image.url }}" class="card-img-top" alt="{{ offer.title }}">
                     {% else %}
@@ -48,7 +38,7 @@
                     </div>
                     {% endif %}
                     <div class="card-body">
-                        <h5 class="card-title">{{ offer.title }}</h5>
+                        <h5 class="card-title" style="font-size: 1.05rem;">{{ offer.title }}</h5>
                         <p class="card-text text-secondary small mb-2">{{ offer.description|truncatewords:20 }}</p>
                         <span class="text-primary small fw-semibold">
                             View plans <i class="bi bi-arrow-right"></i>
@@ -65,35 +55,6 @@
             </div>
         </div>
         {% endfor %}
-    </div>
-</div>
-
-<!-- ============ FILTER MODAL ============ -->
-<div class="modal fade" id="filterModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content bg-body-tertiary text-light">
-            <form method="get" action="{% url 'client_index_page' %}">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title">Filter Offers</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <label class="form-label">Category</label>
-                    <select name="category" class="form-select">
-                        <option value="">All categories</option>
-                        {% for category in categories %}
-                        <option value="{{ category.id }}" {% if selected_category and selected_category.id == category.id %}selected{% endif %}>
-                            {{ category.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Apply Filter</button>
-                </div>
-            </form>
-        </div>
     </div>
 </div>
 {% endblock %}

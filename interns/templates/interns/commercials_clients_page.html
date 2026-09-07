@@ -4,11 +4,11 @@
 
 <h1 class="mb-4">Clients & Stores</h1>
 
-<ul class="nav nav-pills mb-4">
+<ul class="nav djz-quicknav mb-4">
     <li class="nav-item">
         <a class="nav-link {% if view_filter == 'all' %}active{% endif %}"
            href="{% url 'commercials_clients_page' %}?view=all">
-            All Clients & Stores
+            All Clients &amp; Stores
         </a>
     </li>
 
@@ -29,7 +29,7 @@
 
 {% if view_filter == 'pending_offers' %}
 
-<div class="card bg-body-tertiary border-secondary">
+<div class="card">
     <div class="table-responsive">
         <table class="table table-dark table-hover align-middle mb-0">
             <thead>
@@ -72,7 +72,7 @@
 
 {% else %}
 
-<div class="card bg-body-tertiary border-secondary">
+<div class="card">
     <div class="table-responsive">
         <table class="table table-dark table-hover align-middle mb-0">
             <thead>

@@ -5,41 +5,41 @@
 
 <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
-        <div class="card bg-body-tertiary border-secondary">
+        <div class="card stat-card">
             <div class="card-body">
-                <div class="text-secondary small">Offers</div>
-                <div class="fs-3 fw-bold">{{ offers_count }}</div>
+                <div class="stat-label">Offers</div>
+                <div class="stat-value">{{ offers_count }}</div>
             </div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="card bg-body-tertiary border-secondary">
+        <div class="card stat-card">
             <div class="card-body">
-                <div class="text-secondary small">Clients</div>
-                <div class="fs-3 fw-bold">{{ clients_count }}</div>
+                <div class="stat-label">Clients</div>
+                <div class="stat-value">{{ clients_count }}</div>
             </div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="card bg-body-tertiary border-secondary">
+        <div class="card stat-card">
             <div class="card-body">
-                <div class="text-secondary small">Stores</div>
-                <div class="fs-3 fw-bold">{{ stores_count }}</div>
+                <div class="stat-label">Stores</div>
+                <div class="stat-value">{{ stores_count }}</div>
             </div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="card bg-body-tertiary border-secondary">
+        <div class="card stat-card">
             <div class="card-body">
-                <div class="text-secondary small">Total Revenue</div>
-                <div class="fs-3 fw-bold">{{ total_revenue|default:"—" }} DA</div>
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value">{{ total_revenue|default:"—" }} <small class="text-secondary" style="font-size: 1rem;">DA</small></div>
             </div>
         </div>
     </div>
 </div>
 
 <h5 class="mb-3">Recently Added Stores</h5>
-<div class="card bg-body-tertiary border-secondary">
+<div class="card">
     <div class="table-responsive">
         <table class="table table-dark table-hover align-middle mb-0">
             <thead>

@@ -1,18 +1,23 @@
 {% extends 'core/client_page_base.html' %}
 {% block title %}Log in{% endblock %}
 {% block content %}
-<div class="container" style="max-width: 400px;">
-    <h1 class="mb-4">Log in</h1>
-    <form method="post">
-        {% csrf_token %}
-        <div class="mb-3">
-            <input type="email" name="email" class="form-control" placeholder="Email" required>
-        </div>
-        <div class="mb-3">
-            <input type="password" name="password" class="form-control" placeholder="Password" required>
-        </div>
-        <button type="submit" class="btn btn-primary w-100">Log in</button>
-    </form>
-    {% if error %}<div class="alert alert-danger mt-3 py-2">{{ error }}</div>{% endif %}
+<div class="container" style="max-width: 440px;">
+    <div class="auth-card">
+        <h1 class="mb-2" style="font-size: 1.6rem;">Log in</h1>
+        <p class="text-secondary small mb-4">Access your stores, quotas and orders.</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label small text-secondary">Email</label>
+                <input type="email" name="email" class="form-control" placeholder="you@company.com" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label small text-secondary">Password</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mt-2">Log in</button>
+        </form>
+        {% if error %}<div class="alert alert-danger mt-3 py-2 small">{{ error }}</div>{% endif %}
+    </div>
 </div>
 {% endblock %}

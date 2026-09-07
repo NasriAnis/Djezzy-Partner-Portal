@@ -3,32 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Djezzy Client{% endblock %}</title>
+    <title>{% block title %}Djezzy Partners{% endblock %}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'shared/vendor/bootstrap/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'shared/vendor/bootstrap/icons/font/bootstrap-icons.min.css' %}">
     <link rel="stylesheet" href="{% static 'shared/css/djezzy-theme.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="bg-dark text-light">
     <!-- ============ TOP BAR ============ -->
-    <header class="navbar navbar-dark bg-black border-bottom border-3 px-3 py-3 sticky-top" style="border-color: var(--bs-primary) !important; z-index: 1030;">
+    <header class="navbar djz-topbar px-3 py-3 sticky-top" style="z-index: 1030;">
         <div class="d-flex justify-content-between align-items-center w-100" style="max-width: 1200px; margin: 0 auto;">
-            <h2 class="h5 mb-0 text-uppercase">
-                <a href="{% url 'client_index_page' %}" class="text-decoration-none text-light d-flex align-items-center gap-2">
-                    <i class="bi bi-lightning-charge-fill" style="color: var(--bs-primary);"></i>
-                    <span><span style="color: var(--bs-primary);">Djezzy</span> Client</span>
-                </a>
-            </h2>
+            <a href="{% url 'client_index_page' %}" class="djz-logo text-decoration-none">
+                <span class="mark">
+                    <img src="{% static 'shared/icons/Djezzy_icon.png' %}" alt="Djezzy Logo"> </span>
+                <span>
+                    Djezzy
+                    <span class="tag">Partner Portal</span>
+                </span>
+            </a>
             <div class="d-flex align-items-center gap-3">
-                <a href="{% url 'client_index_page' %}" class="nav-text-link">Home</a>
+                <a href="{% url 'client_index_page' %}" class="nav-text-link">Offers</a>
                 {% if user.is_authenticated %}
                     <a href="{% url 'client_dashboard_page' username=user.username %}" class="btn btn-outline-light btn-sm">
                         <i class="bi bi-person-circle me-1"></i>My Account
                     </a>
                     <form action="{% url 'client_logout' %}" method="post" class="d-inline">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Log out">
                             <i class="bi bi-box-arrow-right"></i>
                         </button>
                     </form>
@@ -48,7 +50,7 @@
     </div>
     <footer class="site-footer text-center">
         <div class="container">
-            &copy; {% now "Y" %} Djezzy Client Portal. All rights reserved.
+            &copy; {% now "Y" %} Djezzy Partner Portal. All rights reserved.
         </div>
     </footer>
     <script src="{% static 'shared/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>

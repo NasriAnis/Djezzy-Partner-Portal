@@ -23,7 +23,7 @@
 
 <!-- ============ CATEGORIES + NESTED OFFERS ============ -->
 {% for category in categories %}
-<div class="card bg-body-tertiary border-secondary mb-3">
+<div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center"
          style="cursor: pointer;"
          data-bs-toggle="collapse"
@@ -56,7 +56,7 @@
             <div class="row g-4">
                 {% for offer in category.offers.all %}
                 <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card bg-body-tertiary border-secondary h-100">
+                    <div class="card h-100" style="background: var(--djz-surface-2);">
                         <div class="card-body d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h5 class="card-title mb-0">{{ offer.title }}</h5>
@@ -89,7 +89,7 @@
 <!-- ============ ADD CATEGORY MODAL ============ -->
 <div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content bg-body-tertiary text-light">
+        <div class="modal-content">
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="form_type" value="add_category">
@@ -122,7 +122,7 @@
 {% for category in categories %}
 <div class="modal fade" id="editCategoryModal{{ category.id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content bg-body-tertiary text-light">
+        <div class="modal-content">
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="form_type" value="edit_category">
@@ -153,7 +153,7 @@
 
 <div class="modal fade" id="deleteCategoryModal{{ category.id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content bg-body-tertiary text-light">
+        <div class="modal-content">
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="form_type" value="delete_category">
@@ -183,7 +183,7 @@
 <!-- ============ ADD OFFER MODAL ============ -->
 <div class="modal fade" id="offerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content bg-body-tertiary text-light">
+        <div class="modal-content">
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="form_type" value="add_offer">

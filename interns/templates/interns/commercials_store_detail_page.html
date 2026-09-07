@@ -23,7 +23,7 @@
 
 <div class="row g-4">
     <div class="col-md-6">
-        <div class="card bg-body-tertiary border-secondary">
+        <div class="card">
             <div class="card-body">
                 <h5 class="card-title mb-3">Store Details</h5>
                 <dl class="row mb-0">
@@ -56,12 +56,12 @@
     </div>
 
     <div class="col-md-6">
-        <div class="card bg-body-tertiary border-secondary">
+        <div class="card">
             <div class="card-body">
                 <h5 class="card-title mb-3">Registre de Commerce (RC)</h5>
                 {% if store.rc %}
                     <a href="{{ store.rc.url }}" target="_blank">
-                        <img src="{{ store.rc.url }}" alt="RC document" class="img-fluid rounded border border-secondary">
+                        <img src="{{ store.rc.url }}" alt="RC document" class="img-fluid rounded border" style="border-color: var(--bs-border-color) !important;">
                     </a>
                     <a href="{{ store.rc.url }}" target="_blank" class="btn btn-sm btn-outline-light mt-2">Open Full Size</a>
                 {% else %}
