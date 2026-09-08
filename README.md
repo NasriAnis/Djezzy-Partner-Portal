@@ -43,8 +43,8 @@ A Django-based platform for telecom operators (e.g. Djezzy) to manage offers sol
 # Setup
 ### 1. Clone and enter the project
 ```bash
-git clone https://github.com/NasriAnis/Quota-ManagementSystem.git
-cd https://github.com/NasriAnis/Quota-ManagementSystem.git
+git clone https://github.com/NasriAnis/Djezzy-QuotaManagementSystem.git
+cd Djezzy-QuotaManagementSystem
 ```
  
 ### 2. Create and activate a virtual environment
