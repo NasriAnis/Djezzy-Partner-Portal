@@ -9,6 +9,7 @@ from django.urls import reverse
 from core.models import Offer, OfferPlan, OfferQuota, WILAYA_CHOICES
 from clients.models import Client, Store, StoreOfferTransaction
 from interns.forms import OfferCategoryForm, OfferForm, OfferPlanForm, OfferQuotaForm, OfferCategory
+from notifications.utils import notify
 
 
 def _get_commercial(request):
@@ -258,7 +259,7 @@ def commercials_store_detail_page(request, store_id):
 @login_required(login_url='commercials_login')
 @require_POST
 def commercials_approve_store(request, store_id):
-    _, can_edit = _get_commercial(request)
+    commercial_profile, can_edit = _get_commercial(request)
     if not can_edit:
         messages.error(request, "You have read-only access.")
         return redirect('commercials_store_detail_page', store_id=store_id)
@@ -267,6 +268,8 @@ def commercials_approve_store(request, store_id):
     store.active_status = True
     store.save(update_fields=['active_status'])
     messages.success(request, f'"{store.name}" approved.')
+    notify(commercial_profile, f"Your Store {store.name} has been approved!", store)
+    notify(store.client, f"Your store {store.name} has been approved!"),
     return redirect('commercials_client_detail_page', client_id=store.client_id)
 
 
@@ -287,7 +290,7 @@ def commercials_client_detail_page(request, client_id):
 @login_required(login_url='commercials_login')
 @require_POST
 def commercials_approve_transaction(request, transaction_id):
-    _, can_edit = _get_commercial(request)
+    commercial_profile, can_edit = _get_commercial(request)
     if not can_edit:
         messages.error(request, "You have read-only access.")
         return redirect('commercials_clients_page')
@@ -296,4 +299,6 @@ def commercials_approve_transaction(request, transaction_id):
     transaction.approved_status = True
     transaction.save(update_fields=['approved_status'])
     messages.success(request, f'Offer for "{transaction.store.name}" approved.')
+    notify(transaction.store.client, f"Your transaction {transaction.quantity_bought} has been approved!",
+           transaction.store)
     return redirect(f"{reverse('commercials_clients_page')}?view=pending_offers")

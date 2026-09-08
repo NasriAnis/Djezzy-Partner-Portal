@@ -26,6 +26,7 @@ urlpatterns = [
     path('', include("core.urls")),
     path('account/', include("clients.urls")),
     path('commercial/', include("interns.urls")),
+    path('notifications/', include('notifications.urls')),
     path('favicon.ico/', RedirectView.as_view(url=static_url('shared/favicon_ico/favicon.ico'), permanent=True )),
 ]
 

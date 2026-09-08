@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from core.models import OfferPlan
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 WILAYA_CHOICES = [
     ('01', 'Adrar'), ('02', 'Chlef'), ('03', 'Laghouat'), ('04', 'Oum El Bouaghi'),
