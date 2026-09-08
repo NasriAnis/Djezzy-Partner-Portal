@@ -130,16 +130,6 @@ a:hover { color: var(--bs-primary); }
   .card, .card-hover:hover { transition: none; transform: none; }
 }
 
-/* ---------- Hero band ---------- */
-.hero-band {
-  background: var(--bs-tertiary-bg);
-  border: 1px solid var(--bs-border-color);
-  border-left: 3px solid var(--djz-red);
-  border-radius: .6rem;
-  padding: 2.25rem 2rem;
-}
-.hero-band h1 { font-size: 1.85rem; margin-bottom: .5rem; }
-
 /* ---------- Buttons ---------- */
 .btn { border-radius: .45rem; font-weight: 500; }
 .btn-primary {
