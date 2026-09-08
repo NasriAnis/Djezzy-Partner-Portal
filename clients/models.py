@@ -78,9 +78,5 @@ class StoreOfferTransaction(models.Model):
         verbose_name = "Store Offer Transaction"
         verbose_name_plural = "Store Offer Transactions"
 
-    @property
-    def current_stock(self):
-        return max(0, self.quantity_bought - self.quantity_sold)
-
     def __str__(self):
         return f"{self.store.name} - {self.plan.offer.title} ({self.plan.label}): {self.current_stock} remaining"
