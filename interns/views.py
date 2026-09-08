@@ -5,9 +5,10 @@ from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count, Q
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.urls import reverse
+from django.db import transaction
 
 from core.models import Offer, OfferPlan, OfferQuota, WILAYA_CHOICES
-from clients.models import Client, Store, StoreOfferTransaction
+from clients.models import Client, Store, StoreOfferTransaction, StoreStock
 from interns.forms import OfferCategoryForm, OfferForm, OfferPlanForm, OfferQuotaForm, OfferCategory
 from notifications.utils import notify
 
@@ -290,10 +291,33 @@ def commercials_approve_transaction(request, transaction_id):
         messages.error(request, "You have read-only access.")
         return redirect('commercials_clients_page')
 
-    transaction = get_object_or_404(StoreOfferTransaction, id=transaction_id)
-    transaction.approved_status = True
-    transaction.save(update_fields=['approved_status'])
-    messages.success(request, f'Offer for "{transaction.store.name}" approved.')
-    notify(transaction.store.client, f"Your transaction {transaction.quantity_bought} has been approved!",
-           transaction.store)
+    with transaction.atomic():
+        # Lock transaction row during approval
+        trans = get_object_or_404(
+            StoreOfferTransaction.objects.select_for_update(), 
+            id=transaction_id
+        )
+        
+        if not trans.approved_status:
+            trans.approved_status = True
+            trans.save(update_fields=['approved_status'])
+
+            # Ensure unique row per (store, plan) and atomically update stock
+            stock_obj, created = StoreStock.objects.select_for_update().get_or_create(
+                store=trans.store,
+                plan=trans.plan,
+                defaults={'stock': trans.quantity_bought}
+            )
+
+            if not created:
+                stock_obj.stock = F('stock') + trans.quantity_bought
+                stock_obj.save(update_fields=['stock'])
+
+            messages.success(request, f"Offer for {trans.store.name} approved.")
+            notify(
+                trans.store.client, 
+                f"Your transaction {trans.quantity_bought} has been approved!", 
+                trans.store
+            )
+
     return redirect(f"{reverse('commercials_clients_page')}?view=pending_offers")

@@ -79,4 +79,16 @@ class StoreOfferTransaction(models.Model):
         verbose_name_plural = "Store Offer Transactions"
 
     def __str__(self):
-        return f"{self.store.name} - {self.plan.offer.title} ({self.plan.label}): {self.current_stock} remaining"
+        return f"{self.store.name} - {self.plan.offer.title} ({self.plan.label})"
+
+class StoreStock(models.Model):
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='stock')
+    plan = models.ForeignKey(OfferPlan, on_delete=models.PROTECT, related_name='store_stock')
+    stock = models.PositiveIntegerField(default=0)
+    sold = models.PositiveIntegerField(default=0)
+
+    class Meta:
+            unique_together = ('store', 'plan')
+
+    def __str__(self):
+        return f"{self.store.name} - {self.plan.offer.title} ({self.plan.label}): {self.stock} remaining"
