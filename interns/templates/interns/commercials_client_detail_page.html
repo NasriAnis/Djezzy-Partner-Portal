@@ -56,8 +56,6 @@
                     <th>Store</th>
                     <th>Offer / Plan</th>
                     <th>Bought</th>
-                    <th>Sold</th>
-                    <th>In Stock</th>
                     <th>Date</th>
                 </tr>
             </thead>
@@ -67,8 +65,6 @@
                     <td>{{ t.store.name }}</td>
                     <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
                     <td>{{ t.quantity_bought }}</td>
-                    <td>{{ t.quantity_sold }}</td>
-                    <td>{{ t.current_stock }}</td>
                     <td>{{ t.created_at|date:"d M Y" }}</td>
                 </tr>
                 {% empty %}

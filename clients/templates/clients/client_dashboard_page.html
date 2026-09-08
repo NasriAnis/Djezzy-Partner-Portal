@@ -110,8 +110,6 @@
                                             <tr>
                                                 <th>Offer / Plan</th>
                                                 <th>Bought</th>
-                                                <th>Sold</th>
-                                                <th>In Stock</th>
                                                 <th>Status</th>
                                                 <th>Date</th>
                                             </tr>
@@ -121,8 +119,6 @@
                                             <tr>
                                                 <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
                                                 <td>{{ t.quantity_bought }}</td>
-                                                <td>{{ t.quantity_sold }}</td>
-                                                <td>{{ t.current_stock }}</td>
                                                 <td>
                                                     {% if t.approved_status %}
                                                         <span class="badge bg-success">Approved</span>
