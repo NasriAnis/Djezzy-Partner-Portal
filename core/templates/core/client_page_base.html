@@ -35,6 +35,7 @@
                         </button>
                     </form>
                 {% else %}
+                    <a href="{% url 'commercials_index_page' %}" class="nav-text-link">Commercial space</a>
                     <a href="{% url 'client_login' %}" class="btn btn-outline-light btn-sm">Log in</a>
                     <a href="{% url 'client_signup' %}" class="btn btn-primary btn-sm">Sign up</a>
                 {% endif %}
