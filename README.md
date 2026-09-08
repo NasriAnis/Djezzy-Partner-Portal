@@ -27,6 +27,14 @@ A Django-based platform for telecom operators (e.g. Djezzy) to manage offers sol
 │   ├── views.py
 │   ├── urls.py
 │   └── templates/interns/
+├── notifications/
+│   ├── models.py
+│   ├── admin.py
+│   ├── utils.py              # notify() function utility
+│   ├── context_processors.py # notification processor 
+│   ├── views.py
+│   ├── urls.py
+│   └── templates/notifications/ # Notification html page
 ├── shared/                  # Cross-app reusable code (no models required)
 │   └── ...
 ├── media/                   # User-uploaded files
