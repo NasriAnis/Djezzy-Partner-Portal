@@ -3,11 +3,14 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.http.response import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import ClientSignupForm, StoreForm
-from .models import Client, Commune, Store, StoreOfferTransaction
+from .forms import ClientSignupForm, StoreForm, OfferSaleForm
+from .models import Client, Commune, Store, StoreOfferTransaction, StoreStock, OfferSale
 from django.http import JsonResponse
 from clients.backends import EmailBackend
-from django.db.models import Prefetch
+from django.db.models import Prefetch, F
+from django.db import transaction
+from django.contrib import messages
+from django.urls import reverse
 
 def client_signup(request):
     if request.method == 'POST':
@@ -108,4 +111,68 @@ def client_dashboard_page(request, username):
         'form': form,
         'active_stores': active_stores,
         'pending_stores': pending_stores,
+    })
+
+@login_required(login_url='client_login')
+def client_offer_manage_page(request):
+    client = request.user.client_profile
+    stores = Store.objects.filter(client=client).order_by('name')
+
+    if not stores.exists():
+        messages.info(request, "You don't have any store yet. Add one first.")
+        return render(request, 'clients/client_manage_offer_page.html', {
+            'store': None, 'stores': stores, 'stock_list': [], 'sales': [], 'form': None,
+        })
+
+    store_id = request.GET.get('store') or request.POST.get('store_id_selected')
+    store = None
+    if store_id:
+        store = stores.filter(id=store_id).first()
+    if store is None:
+        store = stores.first()
+    
+    if request.method == 'POST':
+        form = OfferSaleForm(request.POST, store=store)
+        if form.is_valid():
+            with transaction.atomic():
+                stock = StoreStock.objects.select_for_update().get(
+                    store=store, plan_id=form.cleaned_data['plan_id']
+                )
+
+                if stock.remaining < 1:
+                    form.add_error(None, "Stock changed — nothing left. Try again.")
+                else:
+                    stock.sold = F('sold') + 1
+                    stock.save(update_fields=['sold'])
+
+                    OfferSale.objects.create(
+                        store=store,
+                        plan_id=form.cleaned_data['plan_id'],
+                        phone_number=form.cleaned_data['phone_number'],
+                        sold_by=request.user,
+                    )
+                    messages.success(request, "Offer sold successfully.")
+                    return redirect(f"{reverse('client_offer_manage_page')}?store={store.id}")
+    else:
+        form = OfferSaleForm(store=store)
+
+    stock_qs = (
+        StoreStock.objects
+        .filter(store=store)
+        .select_related('plan__offer')
+        .order_by('plan__offer__title', 'plan__label')
+    )
+    sales_qs = (
+        OfferSale.objects
+        .filter(store=store)
+        .select_related('plan__offer')
+        .order_by('-created_at')[:50]
+    )
+
+    return render(request, 'clients/client_manage_offer_page.html', {
+        'store': store,
+        'stores': stores,
+        'stock_list': stock_qs,
+        'sales': sales_qs,
+        'form': form,
     })

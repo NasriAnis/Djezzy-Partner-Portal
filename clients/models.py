@@ -92,3 +92,22 @@ class StoreStock(models.Model):
 
     def __str__(self):
         return f"{self.store.name} - {self.plan.offer.title} ({self.plan.label}): {self.stock} remaining"
+
+    @property
+    def remaining(self):
+        return self.stock - self.sold
+
+class OfferSale(models.Model):
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='sales')
+    plan = models.ForeignKey(OfferPlan, on_delete=models.PROTECT, related_name='sales')
+    phone_number = models.CharField(max_length=20)
+    sold_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Offer Sale"
+        verbose_name_plural = "Offer Sales"
+
+    def __str__(self):
+        return f"{self.store.name} sold {self.plan} to {self.phone_number}"

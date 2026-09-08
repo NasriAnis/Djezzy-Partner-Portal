@@ -1,0 +1,101 @@
+{% extends 'core/client_page_base.html' %}
+{% block title %}Manage My Offers{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 1000px;">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-info">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% if not store %}
+    <p class="text-light">No store found on your account yet.</p>
+  {% else %}
+
+  {% if stores|length > 1 %}
+  <form method="get" class="mb-4 d-flex align-items-center gap-2">
+    <label class="text-light">Store:</label>
+    <select name="store" class="form-select w-auto" onchange="this.form.submit()">
+      {% for s in stores %}
+        <option value="{{ s.id }}" {% if s.id == store.id %}selected{% endif %}>{{ s.name }}</option>
+      {% endfor %}
+    </select>
+  </form>
+  {% endif %}
+
+  <h3 class="text-light">{{ store.name }} — Stock</h3>
+  <table class="table table-dark table-striped">
+    <thead>
+      <tr><th>Offer</th><th>Plan</th><th>Bought</th><th>Sold</th><th>Remaining</th></tr>
+    </thead>
+    <tbody>
+      {% for s in stock_list %}
+      <tr>
+        <td>{{ s.plan.offer.title }}</td>
+        <td>{{ s.plan.label }}</td>
+        <td>{{ s.stock }}</td>
+        <td>{{ s.sold }}</td>
+        <td>{{ s.remaining }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No stock yet — buy an offer first.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3 class="text-light mt-4">Sell an Offer</h3>
+  <form method="post" class="row g-2 align-items-end">
+      {% csrf_token %}
+      <input type="hidden" name="store_id_selected" value="{{ store.id }}">
+      <div class="col-md-5">
+        <label class="text-light">Offer / Plan</label>
+        <select name="plan_id" class="form-select" required>
+          <option value="">Select</option>
+          {% for s in stock_list %}
+            {% if s.remaining > 0 %}
+            <option value="{{ s.plan.id }}">
+              {{ s.plan.offer.title }} — {{ s.plan.label }} ({{ s.remaining }} left)
+            </option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="text-light">Client phone number</label>
+        <input type="text" name="phone_number" class="form-control" required>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary w-100">Sell</button>
+      </div>
+  </form>
+  {% if form.errors %}
+    <div class="mt-2">
+      {% for field, errors in form.errors.items %}
+        {% for error in errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <h3 class="text-light mt-4">Sale History</h3>
+  <table class="table table-dark table-striped">
+    <thead>
+      <tr><th>Date</th><th>Offer</th><th>Plan</th><th>Phone</th><th>Sold by</th></tr>
+    </thead>
+    <tbody>
+      {% for sale in sales %}
+      <tr>
+        <td>{{ sale.created_at|date:"Y-m-d H:i" }}</td>
+        <td>{{ sale.plan.offer.title }}</td>
+        <td>{{ sale.plan.label }}</td>
+        <td>{{ sale.phone_number }}</td>
+        <td>{{ sale.sold_by }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No sales yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

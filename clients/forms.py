@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Store, Commune
+from .models import Store, Commune, OfferSale, StoreStock
 
 class ClientSignupForm(forms.Form):
     username = forms.CharField(max_length=30)
@@ -54,3 +54,32 @@ class StoreForm(forms.ModelForm):
             self.fields['comune'].queryset = Commune.objects.filter(wilaya_code=padded_code).order_by('name')
         else:
             self.fields['comune'].queryset = Commune.objects.none()
+
+class OfferSaleForm(forms.Form):
+    plan_id = forms.IntegerField(widget=forms.HiddenInput)
+    phone_number = forms.CharField(max_length=20, min_length=8)
+
+    def __init__(self, *args, store=None, **kwargs):
+        self.store = store
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned = super().clean()
+        plan_id = cleaned.get('plan_id')
+        if plan_id is None:
+            return cleaned
+
+        try:
+            stock = StoreStock.objects.select_related('plan__offer').get(
+                store=self.store, plan_id=plan_id
+            )
+        except StoreStock.DoesNotExist:
+            raise forms.ValidationError("This offer isn't stocked at this store.")
+
+        if stock.remaining < 1:
+            raise forms.ValidationError(
+                f"No stock left for {stock.plan.offer.title} ({stock.plan.label})."
+            )
+
+        cleaned['stock_obj'] = stock
+        return cleaned
