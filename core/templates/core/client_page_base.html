@@ -49,6 +49,7 @@
                               <li><span class="dropdown-item text-muted">No notifications</span></li>
                             {% endfor %}
                             <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center" href="{% url 'notifications:all' %}">View all notifications</a></li>
                           </ul>
                         </div>
                         <a href="{% url 'client_dashboard_page' username=user.username %}" class="btn btn-outline-light btn-sm">

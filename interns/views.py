@@ -268,8 +268,7 @@ def commercials_approve_store(request, store_id):
     store.active_status = True
     store.save(update_fields=['active_status'])
     messages.success(request, f'"{store.name}" approved.')
-    notify(commercial_profile, f"Your Store {store.name} has been approved!", store)
-    notify(store.client, f"Your store {store.name} has been approved!"),
+    notify(store.client, f"Your store {store.name} has been approved!", store),
     return redirect('commercials_client_detail_page', client_id=store.client_id)
 
 
