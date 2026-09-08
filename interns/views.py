@@ -49,15 +49,11 @@ def commercials_dashboard_page(request):
         F('quantity_bought') * F('plan__price_da'),
         output_field=DecimalField(max_digits=14, decimal_places=2)
     )
-    total_revenue = StoreOfferTransaction.objects.aggregate(
-        total=Sum(revenue_expr)
-    )['total'] or 0
 
     context = {
         'offers_count': Offer.objects.count(),
         'clients_count': Client.objects.count(),
         'stores_count': Store.objects.count(),
-        'total_revenue': total_revenue,
         'recent_stores': Store.objects.select_related('client__user').order_by('-created_at')[:5],
     }
     return render(request, 'interns/commercials_dashboard_page.html', context)
