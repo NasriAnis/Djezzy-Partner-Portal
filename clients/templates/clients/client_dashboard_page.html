@@ -120,10 +120,12 @@
                                                 <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
                                                 <td>{{ t.quantity_bought }}</td>
                                                 <td>
-                                                    {% if t.approved_status %}
+                                                    {% if t.approved_status and not t.blocked_status %}
                                                         <span class="badge bg-success">Approved</span>
-                                                    {% else %}
+                                                    {% elif not t.blocked_status and not t.approved_status %}
                                                         <span class="badge bg-warning text-dark">Pending</span>
+                                                    {% elif t.blocked_status and not t.approved_status %}
+                                                        <span class="badge bg-danger text-dark">Blocked</span>
                                                     {% endif %}
                                                 </td>
                                                 <td>{{ t.created_at|date:"d M Y" }}</td>
@@ -154,10 +156,10 @@
     <!-- ============ UNDER REVIEW STORES SECTION ============ -->
     <section id="under_review_stores" class="mb-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0" style="font-size: 1.3rem;">Under Review Stores</h2>
+            <h2 class="mb-0" style="font-size: 1.3rem;">Stores History</h2>
         </div>
 
-        {% if pending_stores %}
+        {% if pending_blocked_stores %}
         <div class="card">
             <div class="table-responsive">
                 <table class="table table-dark table-hover align-middle mb-0">
@@ -169,10 +171,11 @@
                             <th>Commune</th>
                             <th>Phone</th>
                             <th>Created</th>
+                            <th>status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for store in pending_stores %}
+                        {% for store in pending_blocked_stores %}
                         <tr>
                             <td>{{ store.name }}</td>
                             <td>{{ store.address_line1 }}</td>
@@ -180,6 +183,11 @@
                             <td>{{ store.comune.name }}</td>
                             <td class="{% if not store.phone %}text-muted{% endif %}">{{ store.phone|default:"—" }}</td>
                             <td>{{ store.created_at|date:"d M Y" }}</td>
+                            {% if not store.active_status and not store.blocked_status %}
+                                <td><span class="badge bg-warning">Pending</span></td>
+                            {% elif not store.active_status and store.blocked_status %}
+                                <td><span class="badge bg-danger">Blocked</span></td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>

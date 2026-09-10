@@ -219,7 +219,7 @@ def commercials_clients_page(request):
     if view_filter == 'pending_offers':
         pending_transactions = (
             StoreOfferTransaction.objects
-            .filter(approved_status=False)
+            .filter(approved_status=False, blocked_status=False)
             .select_related('store__client__user', 'plan__offer')
             .order_by('-created_at')
         )
@@ -232,7 +232,7 @@ def commercials_clients_page(request):
             .prefetch_related('locations')
             .annotate(
                 inactive_locations_count=Count(
-                    'locations', filter=Q(locations__active_status=False)
+                    'locations', filter=Q(locations__active_status=False, locations__blocked_status=False)
                 )
             )
         )
@@ -262,12 +262,38 @@ def commercials_approve_store(request, store_id):
         return redirect('commercials_store_detail_page', store_id=store_id)
 
     store = get_object_or_404(Store, id=store_id)
+
+    if store.blocked_status:
+        store.blocked_status = False
+        store.save(update_fields=['blocked_status'])
+
     store.active_status = True
     store.save(update_fields=['active_status'])
     messages.success(request, f'"{store.name}" approved.')
     notify(store.client, f"Your store {store.name} has been approved!", store),
-    return redirect('commercials_client_detail_page', client_id=store.client_id)
 
+    return redirect(request.META.get('HTTP_REFERER', reverse('commercials_clients_page')))
+
+@login_required(login_url='commercials_login')
+@require_POST
+def commercials_block_store(request, store_id):
+    commercial_profile, can_edit = _get_commercial(request)
+    if not can_edit:
+        messages.error(request, "You have read-only access.")
+        return redirect('commercials_store_detail_page', store_id=store_id)
+
+    store = get_object_or_404(Store, id=store_id)
+
+    if store.active_status:
+        store.active_status = False
+        store.save(update_fields=['active_status'])
+
+    store.blocked_status = True
+    store.save(update_fields=['blocked_status'])
+    messages.success(request, f'"{store.name}" not approved approved.')
+    notify(store.client, f"Your store {store.name} has been blocked!", store),
+
+    return redirect(request.META.get('HTTP_REFERER', reverse('commercials_clients_page')))
 
 @login_required(login_url='commercials_login')
 def commercials_client_detail_page(request, client_id):
@@ -297,7 +323,11 @@ def commercials_approve_transaction(request, transaction_id):
             StoreOfferTransaction.objects.select_for_update(), 
             id=transaction_id
         )
-        
+
+        if trans.blocked_status:
+            trans.blocked_status = False
+            trans.save(update_fields=['blocked_status'])
+
         if not trans.approved_status:
             trans.approved_status = True
             trans.save(update_fields=['approved_status'])
@@ -320,4 +350,36 @@ def commercials_approve_transaction(request, transaction_id):
                 trans.store
             )
 
-    return redirect(f"{reverse('commercials_clients_page')}?view=pending_offers")
+    return redirect(request.META.get('HTTP_REFERER', reverse('commercials_clients_page')))
+
+@login_required(login_url='commercials_login')
+@require_POST
+def commercials_deny_transaction(request, transaction_id):
+    commercial_profile, can_edit = _get_commercial(request)
+    if not can_edit:
+        messages.error(request, "You have read-only access.")
+        return redirect('commercials_clients_page')
+
+    with transaction.atomic():
+        # Lock transaction row during approval
+        trans = get_object_or_404(
+            StoreOfferTransaction.objects.select_for_update(), 
+            id=transaction_id
+        )
+
+        if not trans.blocked_status:
+            if trans.approved_status:
+                trans.approved_status = False
+                trans.save(update_fields=['approved_status'])
+
+            trans.blocked_status = True
+            trans.save(update_fields=['blocked_status'])
+
+            messages.success(request, f"Offer for {trans.store.name} blocked.")
+            notify(
+                trans.store.client, 
+                f"Your transaction {trans.quantity_bought} has not been approved!",
+                trans.store
+            )
+
+    return redirect(request.META.get('HTTP_REFERER', reverse('commercials_clients_page')))

@@ -7,7 +7,7 @@ from .forms import ClientSignupForm, StoreForm, OfferSaleForm
 from .models import Client, Commune, Store, StoreOfferTransaction, StoreStock, OfferSale
 from django.http import JsonResponse
 from clients.backends import EmailBackend
-from django.db.models import Prefetch, F
+from django.db.models import Prefetch, F, Q
 from django.db import transaction
 from django.contrib import messages
 from django.urls import reverse
@@ -103,20 +103,23 @@ def client_dashboard_page(request, username):
             queryset=StoreOfferTransaction.objects.select_related('plan__offer').order_by('-created_at')
         )
     )
-    pending_stores = Store.objects.filter(client=client, active_status=False)
+    pending_blocked_stores = Store.objects.filter(
+        Q(client=client, active_status=False, blocked_status=False) |
+        Q(client=client, active_status=False, blocked_status=True)
+    )
 
     return render(request, 'clients/client_dashboard_page.html', {
         'client': client,
         'stores': stores,
         'form': form,
         'active_stores': active_stores,
-        'pending_stores': pending_stores,
+        'pending_blocked_stores': pending_blocked_stores,
     })
 
 @login_required(login_url='client_login')
 def client_offer_manage_page(request):
     client = request.user.client_profile
-    stores = Store.objects.filter(client=client).order_by('name')
+    stores = Store.objects.filter(client=client, active_status=True).order_by('name')
 
     if not stores.exists():
         messages.info(request, "You don't have any store yet. Add one first.")

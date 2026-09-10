@@ -23,24 +23,98 @@
             </thead>
             <tbody>
                 {% for store in stores %}
-                <tr>
-                    <td>{{ store.name }}</td>
-                    <td>{{ store.get_wilaya_display }}</td>
-                    <td>{{ store.comune.name }}</td>
-                    <td>{{ store.created_at|date:"d M Y" }}</td>
-                    <td>
-                        {% if store.active_status %}
+                    {% if not store.blocked_status and store.active_status %}
+                    <tr>
+                        <td>{{ store.name }}</td>
+                        <td>{{ store.get_wilaya_display }}</td>
+                        <td>{{ store.comune.name }}</td>
+                        <td>{{ store.created_at|date:"d M Y" }}</td>
+                        <td>
                             <span class="badge bg-success">Active</span>
-                        {% else %}
-                            <span class="badge bg-warning text-dark">Pending</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{% url 'commercials_store_detail_page' store.id %}" class="btn btn-sm btn-outline-light">View</a>
-                    </td>
-                </tr>
+                        </td>
+                        <td>
+                            <a href="{% url 'commercials_store_detail_page' store.id %}" class="btn btn-sm btn-outline-light">View</a>
+                        </td>
+                    </tr>
+                    {% endif %}
                 {% empty %}
                 <tr><td colspan="6" class="text-secondary">No stores yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<h5 class="mb-3">Pending Stores</h5>
+<div class="card mb-4">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Wilaya</th>
+                    <th>Commune</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for store in stores %}
+                    {% if not store.blocked_status and not store.active_status %}
+                    <tr>
+                        <td>{{ store.name }}</td>
+                        <td>{{ store.get_wilaya_display }}</td>
+                        <td>{{ store.comune.name }}</td>
+                        <td>{{ store.created_at|date:"d M Y" }}</td>
+                        <td>
+                            <span class="badge bg-warning">Pending</span>
+                        </td>
+                        <td>
+                            <a href="{% url 'commercials_store_detail_page' store.id %}" class="btn btn-sm btn-outline-light">View</a>
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% empty %}
+                <tr><td colspan="6" class="text-secondary">No stores yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<h5 class="mb-3">Blocked Stores History</h5>
+<div class="card mb-4">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Wilaya</th>
+                    <th>Commune</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for store in stores %}
+                    {% if store.blocked_status %}
+                    <tr>
+                        <td>{{ store.name }}</td>
+                        <td>{{ store.get_wilaya_display }}</td>
+                        <td>{{ store.comune.name }}</td>
+                        <td>{{ store.created_at|date:"d M Y" }}</td>
+                        <td>
+                            <span class="badge bg-danger">Blocked</span>
+                        </td>
+                        <td>
+                            <a href="{% url 'commercials_store_detail_page' store.id %}" class="btn btn-sm btn-outline-light">View</a>
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% empty %}
+                <tr><td colspan="6" class="text-secondary">No blocked stores.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -57,6 +131,7 @@
                     <th>Offer / Plan</th>
                     <th>Bought</th>
                     <th>Date</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -66,6 +141,43 @@
                     <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
                     <td>{{ t.quantity_bought }}</td>
                     <td>{{ t.created_at|date:"d M Y" }}</td>
+                    {% if t.approved_status and not t.blocked_status %}
+                        <td>
+                            <span class="badge bg-success">Approved</span>
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'commercials_deny_transaction' t.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success">Block</button>
+                            </form>
+                        </td>
+                    {% elif t.blocked_status and not t.approved_status %}
+                        <td>
+                            <span class="badge bg-danger">Blocked</span>
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'commercials_approve_transaction' t.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                            </form>
+                        </td>
+                    {% elif not t.blocked_status and not t.approved_status %}
+                        <td>
+                            <span class="badge bg-warning">Pending</span>
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'commercials_approve_transaction' t.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'commercials_deny_transaction' t.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success">Block</button>
+                            </form>
+                        </td>
+                    {% endif %}
                 </tr>
                 {% empty %}
                 <tr><td colspan="6" class="text-secondary">No transactions yet.</td></tr>

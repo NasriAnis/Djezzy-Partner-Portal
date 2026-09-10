@@ -55,6 +55,7 @@ class Store(models.Model):
     rc = models.ImageField(upload_to='client_rc/', default="", null=True)
     nif = models.CharField(default="", null=True, max_length=20)
     active_status = models.BooleanField(default=False)
+    blocked_status = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -70,6 +71,7 @@ class StoreOfferTransaction(models.Model):
     plan = models.ForeignKey(OfferPlan, on_delete=models.PROTECT, related_name='store_transactions')
     quantity_bought = models.PositiveIntegerField(default=0)
     approved_status = models.BooleanField(default=False)
+    blocked_status = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
