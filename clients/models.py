@@ -54,8 +54,23 @@ class Store(models.Model):
     phone = models.CharField(max_length=20, blank=True)
     rc = models.ImageField(upload_to='client_rc/', default="", null=True)
     nif = models.CharField(default="", null=True, max_length=20)
-    active_status = models.BooleanField(default=False)
-    blocked_status = models.BooleanField(default=False)
+
+    STATUS_PENDING = 'pending'
+    STATUS_APPROVED = 'approved'
+    STATUS_BLOCKED = 'blocked'
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_APPROVED, 'Approved'),
+        (STATUS_BLOCKED, 'Blocked'),
+    ]
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -70,8 +85,23 @@ class StoreOfferTransaction(models.Model):
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='transactions')
     plan = models.ForeignKey(OfferPlan, on_delete=models.PROTECT, related_name='store_transactions')
     quantity_bought = models.PositiveIntegerField(default=0)
-    approved_status = models.BooleanField(default=False)
-    blocked_status = models.BooleanField(default=False)
+
+    STATUS_PENDING = 'pending'
+    STATUS_APPROVED = 'approved'
+    STATUS_BLOCKED = 'blocked'
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_APPROVED, 'Approved'),
+        (STATUS_BLOCKED, 'Blocked'),
+    ]
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -23,7 +23,7 @@
             </thead>
             <tbody>
                 {% for store in stores %}
-                    {% if not store.blocked_status and store.active_status %}
+                    {% if store.status == 'approved' %}
                     <tr>
                         <td>{{ store.name }}</td>
                         <td>{{ store.get_wilaya_display }}</td>
@@ -61,7 +61,7 @@
             </thead>
             <tbody>
                 {% for store in stores %}
-                    {% if not store.blocked_status and not store.active_status %}
+                    {% if store.status == 'pending' %}
                     <tr>
                         <td>{{ store.name }}</td>
                         <td>{{ store.get_wilaya_display }}</td>
@@ -99,7 +99,7 @@
             </thead>
             <tbody>
                 {% for store in stores %}
-                    {% if store.blocked_status %}
+                    {% if store.status == 'blocked' %}
                     <tr>
                         <td>{{ store.name }}</td>
                         <td>{{ store.get_wilaya_display }}</td>
@@ -141,7 +141,7 @@
                     <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
                     <td>{{ t.quantity_bought }}</td>
                     <td>{{ t.created_at|date:"d M Y" }}</td>
-                    {% if t.approved_status and not t.blocked_status %}
+                    {% if t.status == 'approved' %}
                         <td>
                             <span class="badge bg-success">Approved</span>
                         </td>
@@ -151,7 +151,7 @@
                                 <button type="submit" class="btn btn-sm btn-success">Block</button>
                             </form>
                         </td>
-                    {% elif t.blocked_status and not t.approved_status %}
+                    {% elif t.status == 'blocked' %}
                         <td>
                             <span class="badge bg-danger">Blocked</span>
                         </td>
@@ -161,7 +161,7 @@
                                 <button type="submit" class="btn btn-sm btn-success">Approve</button>
                             </form>
                         </td>
-                    {% elif not t.blocked_status and not t.approved_status %}
+                    {% else %}
                         <td>
                             <span class="badge bg-warning">Pending</span>
                         </td>

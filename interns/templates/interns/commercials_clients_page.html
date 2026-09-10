@@ -103,13 +103,6 @@
                 </tr>
                 {% empty %}
                 <tr><td colspan="5" class="text-secondary">No clients found.</td></tr>
-                        <td>
-                            {% if store.active_status %}
-                            <span class="badge bg-success">Active</span>
-                            {% else %}
-                            <span class="badge bg-warning text-dark">Pending</span>
-                            {% endif %}
-                        </td>
                 {% endfor %}
             </tbody>
         </table>

@@ -85,7 +85,7 @@ def client_dashboard_page(request, username):
             if form.is_valid():
                 store = form.save(commit=False)
                 store.client = client
-                store.active_status = False
+                store.status = Store.STATUS_PENDING
                 store.save()
                 return redirect('client_dashboard_page', username=username)
 
@@ -97,16 +97,15 @@ def client_dashboard_page(request, username):
             store.save()
             return redirect('client_dashboard_page', username=username)
 
-    active_stores = Store.objects.filter(client=client, active_status=True).prefetch_related(
+    active_stores = Store.objects.filter(client=client, status=Store.STATUS_APPROVED).prefetch_related(
         Prefetch(
             'transactions',
             queryset=StoreOfferTransaction.objects.select_related('plan__offer').order_by('-created_at')
         )
     )
     pending_blocked_stores = Store.objects.filter(
-        Q(client=client, active_status=False, blocked_status=False) |
-        Q(client=client, active_status=False, blocked_status=True)
-    )
+        client=client
+    ).exclude(status=Store.STATUS_APPROVED)
 
     return render(request, 'clients/client_dashboard_page.html', {
         'client': client,
@@ -119,7 +118,7 @@ def client_dashboard_page(request, username):
 @login_required(login_url='client_login')
 def client_offer_manage_page(request):
     client = request.user.client_profile
-    stores = Store.objects.filter(client=client, active_status=True).order_by('name')
+    stores = Store.objects.filter(client=client, status=Store.STATUS_APPROVED).order_by('name')
 
     if not stores.exists():
         messages.info(request, "You don't have any store yet. Add one first.")

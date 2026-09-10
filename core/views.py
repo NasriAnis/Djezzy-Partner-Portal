@@ -31,7 +31,7 @@ def offer_detail_page(request, offer_slug):
 
     if request.user.is_authenticated and hasattr(request.user, 'client_profile'):
         # Only stores that have been accepted can be selected for buying
-        user_stores = request.user.client_profile.locations.filter(active_status=True)
+        user_stores = request.user.client_profile.locations.filter(status=Store.STATUS_APPROVED)
 
         selected_store_id = request.GET.get('store_id')
         if selected_store_id:
@@ -55,7 +55,7 @@ def offer_detail_page(request, offer_slug):
         # Belt-and-braces: re-check status even though selected_store was
         # already pulled from the accepted-only queryset above, in case
         # its status changed between page load and form submit.
-        if selected_store.active_status != True:
+        if selected_store.status != Store.STATUS_APPROVED:
             messages.error(request, "This store isn't approved yet — purchases aren't allowed.")
             return redirect('offer_detail_page', offer_slug=offer.slug)
 
@@ -84,7 +84,7 @@ def offer_detail_page(request, offer_slug):
                 store_tx, created = StoreOfferTransaction.objects.get_or_create(
                     store=selected_store,
                     plan=plan,
-                    approved_status=False,
+                    status=StoreOfferTransaction.STATUS_PENDING,
                     defaults={'quantity_bought': quantity}
                 )
                 if not created:

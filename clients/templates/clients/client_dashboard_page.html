@@ -120,12 +120,12 @@
                                                 <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
                                                 <td>{{ t.quantity_bought }}</td>
                                                 <td>
-                                                    {% if t.approved_status and not t.blocked_status %}
+                                                    {% if t.status == 'approved' %}
                                                         <span class="badge bg-success">Approved</span>
-                                                    {% elif not t.blocked_status and not t.approved_status %}
-                                                        <span class="badge bg-warning text-dark">Pending</span>
-                                                    {% elif t.blocked_status and not t.approved_status %}
+                                                    {% elif t.status == 'blocked' %}
                                                         <span class="badge bg-danger text-dark">Blocked</span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning text-dark">Pending</span>
                                                     {% endif %}
                                                 </td>
                                                 <td>{{ t.created_at|date:"d M Y" }}</td>
@@ -183,9 +183,9 @@
                             <td>{{ store.comune.name }}</td>
                             <td class="{% if not store.phone %}text-muted{% endif %}">{{ store.phone|default:"—" }}</td>
                             <td>{{ store.created_at|date:"d M Y" }}</td>
-                            {% if not store.active_status and not store.blocked_status %}
+                            {% if store.status == 'pending' %}
                                 <td><span class="badge bg-warning">Pending</span></td>
-                            {% elif not store.active_status and store.blocked_status %}
+                            {% elif store.status == 'blocked' %}
                                 <td><span class="badge bg-danger">Blocked</span></td>
                             {% endif %}
                         </tr>
