@@ -11,8 +11,7 @@ def get_least_loaded_commercial():
     active_statuses = [Store.STATUS_PENDING, Store.STATUS_APPROVED]
 
     return (
-        Commercial.objects
-        .filter(access_rights=Commercial.AccessRights.READ_WRITE)
+        Commercial.objects.filter(access_rights=Commercial.AccessRights.READ_WRITE)
         .annotate(
             store_count=Count(
                 "store",

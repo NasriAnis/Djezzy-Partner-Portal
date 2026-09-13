@@ -71,9 +71,9 @@ def commercials_dashboard_page(request):
 
     context = {
         "offers_count": Offer.objects.count(),
-        "clients_count": Client.objects.filter(
-            locations__commmercial=commercial
-        ).distinct().count(),
+        "clients_count": Client.objects.filter(locations__commmercial=commercial)
+        .distinct()
+        .count(),
         "stores_count": my_stores.count(),
         "recent_stores": my_stores.select_related("client__user").order_by(
             "-created_at"

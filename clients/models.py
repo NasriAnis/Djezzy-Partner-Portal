@@ -91,6 +91,7 @@ class Commune(models.Model):
     def __str__(self):
         return f"{self.name} ({self.wilaya_code})"
 
+
 class Store(models.Model):
     client = models.ForeignKey(
         Client, on_delete=models.CASCADE, related_name="locations"
@@ -135,8 +136,10 @@ class Store(models.Model):
     def save(self, *args, **kwargs):
         if self._state.adding and not self.commmercial_id:
             from .services import get_least_loaded_commercial
+
             self.commmercial = get_least_loaded_commercial()
         super().save(*args, **kwargs)
+
 
 class StoreOfferTransaction(models.Model):
     store = models.ForeignKey(
