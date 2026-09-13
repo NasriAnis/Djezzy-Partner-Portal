@@ -311,7 +311,6 @@ def commercials_approve_transaction(request, transaction_id):
 
     return redirect(request.META.get('HTTP_REFERER', reverse('commercials_clients_page')))
 
-
 @login_required(login_url='commercials_login')
 @require_POST
 def commercials_deny_transaction(request, transaction_id):
@@ -319,6 +318,13 @@ def commercials_deny_transaction(request, transaction_id):
     if not can_edit:
         messages.error(request, "You have read-only access.")
         return redirect('commercials_clients_page')
+
+    fallback_url = request.META.get('HTTP_REFERER') or reverse('commercials_clients_page')
+
+    reason = request.POST.get("reason", "").strip()
+    if not reason:
+        messages.error(request, "You must provide a reason.")
+        return redirect(fallback_url)
 
     with transaction.atomic():
         # Lock transaction row during approval
@@ -329,16 +335,19 @@ def commercials_deny_transaction(request, transaction_id):
 
         if trans.status != StoreOfferTransaction.STATUS_BLOCKED:
             trans.status = StoreOfferTransaction.STATUS_BLOCKED
-            trans.save(update_fields=['status'])
+            trans.comment = reason
+            trans.save(update_fields=['status', 'comment'])
 
             messages.success(request, f"Offer for {trans.store.name} blocked.")
             notify(
                 trans.store.client,
-                f"Your transaction {trans.quantity_bought} has not been approved!",
+                f"Your transaction {trans.quantity_bought} has not been approved: {reason}",
                 trans.store
             )
+        else:
+            messages.info(request, "This transaction was already blocked.")
 
-    return redirect(request.META.get('HTTP_REFERER', reverse('commercials_clients_page')))
+    return redirect(fallback_url)
 
 @login_required(login_url='commercials_login')
 @require_POST
@@ -358,21 +367,26 @@ def commercials_approve_store(request, store_id):
 
     return redirect(request.META.get('HTTP_REFERER', reverse('commercials_clients_page')))
 
-
 @login_required(login_url='commercials_login')
 @require_POST
 def commercials_block_store(request, store_id):
-    commercial_profile, can_edit = _get_commercial(request)
+    _, can_edit = _get_commercial(request)
     if not can_edit:
         messages.error(request, "You have read-only access.")
         return redirect('commercials_store_detail_page', store_id=store_id)
 
     store = get_object_or_404(Store, id=store_id)
+    fallback_url = request.META.get('HTTP_REFERER') or reverse('commercials_clients_page')
+
+    reason = request.POST.get("reason", "").strip()
+    if not reason:
+        messages.error(request, "You must provide a reason.")
+        return redirect(fallback_url)
 
     if store.status != Store.STATUS_BLOCKED:
         store.status = Store.STATUS_BLOCKED
         store.save(update_fields=['status'])
         messages.success(request, f'"{store.name}" blocked.')
-        notify(store.client, f"Your store {store.name} has been blocked!", store),
+        notify(store.client, f"Your store {store.name} has been blocked: {reason}", store)
 
-    return redirect(request.META.get('HTTP_REFERER', reverse('commercials_clients_page')))
+    return redirect(fallback_url)

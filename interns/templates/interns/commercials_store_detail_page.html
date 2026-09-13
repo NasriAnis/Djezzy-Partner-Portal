@@ -23,12 +23,35 @@
         </form>
         {% endif %}
         {% if store.status != 'blocked' %}
-        <form method="post" action="{% url 'commercials_block_store' store.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Block Store</button>
-        </form>
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#blockModal{{ store.id }}">
+            Block Store
+        </button>
         {% endif %}
     </div>
+</div>
+
+<!-- Block Store Modal -->
+<div class="modal fade" id="blockModal{{ store.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'commercials_block_store' store.id %}">
+        {% csrf_token %}
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title">Block Store</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label for="block_reason{{ store.id }}" class="form-label">Reason</label>
+          <textarea name="reason" id="block_reason{{ store.id }}" class="form-control" required
+                    placeholder="Write the reason..."></textarea>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Confirm Block</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <div class="row g-4">
