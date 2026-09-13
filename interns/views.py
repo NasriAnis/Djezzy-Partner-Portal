@@ -64,11 +64,6 @@ def commercials_login(request):
 
 @login_required(login_url="commercials_login")
 def commercials_dashboard_page(request):
-    revenue_expr = ExpressionWrapper(
-        F("quantity_bought") * F("plan__price_da"),
-        output_field=DecimalField(max_digits=14, decimal_places=2),
-    )
-
     context = {
         "offers_count": Offer.objects.count(),
         "clients_count": Client.objects.count(),
