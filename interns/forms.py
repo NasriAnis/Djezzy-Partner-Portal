@@ -6,6 +6,7 @@ from .models import Commercial
 
 User = get_user_model()
 
+# Login commercial form at /commercial/login/
 class CommercialAdminForm(forms.ModelForm):
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
@@ -49,6 +50,7 @@ class CommercialAdminForm(forms.ModelForm):
             commercial.save()
         return commercial
 
+# Adding a category form at /commercial/offers/
 class OfferCategoryForm(forms.ModelForm):
     class Meta:
         model = OfferCategory
@@ -59,6 +61,7 @@ class OfferCategoryForm(forms.ModelForm):
         }
 
 
+# Adding a Offer form at /commercial/offers/
 class OfferForm(forms.ModelForm):
     class Meta:
         model = Offer
@@ -72,7 +75,7 @@ class OfferForm(forms.ModelForm):
             'is_new': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
-
+# Adding a Offer Plan form at /commercial/offers/<offer-slug>/edit/
 class OfferPlanForm(forms.ModelForm):
     class Meta:
         model = OfferPlan
@@ -87,6 +90,7 @@ class OfferPlanForm(forms.ModelForm):
         }
 
 
+# Adding a Offer Plan Quota form at /commercial/offers/<offer-slug>/edit/
 class OfferQuotaForm(forms.ModelForm):
     class Meta:
         model = OfferQuota

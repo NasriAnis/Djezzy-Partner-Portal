@@ -1,8 +1,11 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.db import transaction
+
 from .models import Offer, OfferPlan, OfferQuota, OfferCategory
 from clients.models import Store, StoreOfferTransaction
+
+########## Pages ##########
 
 def client_index_page(request):
     offers = Offer.objects.filter(is_active=True)
@@ -72,7 +75,7 @@ def offer_detail_page(request, offer_slug):
 
         with transaction.atomic():
             formatted_wilaya_code = str(selected_store.wilaya).zfill(2)
-            
+
             # Lock the quota row to prevent race conditions during checkout
             current_quota = OfferQuota.objects.select_for_update().filter(
                 offer=offer,

@@ -12,6 +12,7 @@ from clients.models import Client, Store, StoreOfferTransaction, StoreStock
 from interns.forms import OfferCategoryForm, OfferForm, OfferPlanForm, OfferQuotaForm, OfferCategory
 from notifications.utils import notify
 
+########### Utils ###########
 
 def _get_commercial(request):
     """Helper: returns (commercial, can_edit)."""
@@ -19,15 +20,15 @@ def _get_commercial(request):
     can_edit = bool(commercial) and commercial.access_rights == commercial.AccessRights.READ_WRITE
     return commercial, can_edit
 
+def commercials_logout(request):
+    logout(request)
+    return redirect('commercials_login')
+
+########### Pages ###########
 
 def commercials_index_page(request):
     if request.user.is_authenticated:
         return redirect('commercials_dashboard_page')
-    return redirect('commercials_login')
-
-
-def commercials_logout(request):
-    logout(request)
     return redirect('commercials_login')
 
 
@@ -253,42 +254,6 @@ def commercials_store_detail_page(request, store_id):
     return render(request, 'interns/commercials_store_detail_page.html', {'store': store})
 
 
-@login_required(login_url='commercials_login')
-@require_POST
-def commercials_approve_store(request, store_id):
-    commercial_profile, can_edit = _get_commercial(request)
-    if not can_edit:
-        messages.error(request, "You have read-only access.")
-        return redirect('commercials_store_detail_page', store_id=store_id)
-
-    store = get_object_or_404(Store, id=store_id)
-
-    if store.status != Store.STATUS_APPROVED:
-        store.status = Store.STATUS_APPROVED
-        store.save(update_fields=['status'])
-        messages.success(request, f'"{store.name}" approved.')
-        notify(store.client, f"Your store {store.name} has been approved!", store),
-
-    return redirect(request.META.get('HTTP_REFERER', reverse('commercials_clients_page')))
-
-
-@login_required(login_url='commercials_login')
-@require_POST
-def commercials_block_store(request, store_id):
-    commercial_profile, can_edit = _get_commercial(request)
-    if not can_edit:
-        messages.error(request, "You have read-only access.")
-        return redirect('commercials_store_detail_page', store_id=store_id)
-
-    store = get_object_or_404(Store, id=store_id)
-
-    if store.status != Store.STATUS_BLOCKED:
-        store.status = Store.STATUS_BLOCKED
-        store.save(update_fields=['status'])
-        messages.success(request, f'"{store.name}" blocked.')
-        notify(store.client, f"Your store {store.name} has been blocked!", store),
-
-    return redirect(request.META.get('HTTP_REFERER', reverse('commercials_clients_page')))
 
 
 @login_required(login_url='commercials_login')
@@ -304,6 +269,8 @@ def commercials_client_detail_page(request, client_id):
         'transactions': transactions,
     })
 
+
+########### APIs ###########
 
 @login_required(login_url='commercials_login')
 @require_POST
@@ -370,5 +337,42 @@ def commercials_deny_transaction(request, transaction_id):
                 f"Your transaction {trans.quantity_bought} has not been approved!",
                 trans.store
             )
+
+    return redirect(request.META.get('HTTP_REFERER', reverse('commercials_clients_page')))
+
+@login_required(login_url='commercials_login')
+@require_POST
+def commercials_approve_store(request, store_id):
+    commercial_profile, can_edit = _get_commercial(request)
+    if not can_edit:
+        messages.error(request, "You have read-only access.")
+        return redirect('commercials_store_detail_page', store_id=store_id)
+
+    store = get_object_or_404(Store, id=store_id)
+
+    if store.status != Store.STATUS_APPROVED:
+        store.status = Store.STATUS_APPROVED
+        store.save(update_fields=['status'])
+        messages.success(request, f'"{store.name}" approved.')
+        notify(store.client, f"Your store {store.name} has been approved!", store),
+
+    return redirect(request.META.get('HTTP_REFERER', reverse('commercials_clients_page')))
+
+
+@login_required(login_url='commercials_login')
+@require_POST
+def commercials_block_store(request, store_id):
+    commercial_profile, can_edit = _get_commercial(request)
+    if not can_edit:
+        messages.error(request, "You have read-only access.")
+        return redirect('commercials_store_detail_page', store_id=store_id)
+
+    store = get_object_or_404(Store, id=store_id)
+
+    if store.status != Store.STATUS_BLOCKED:
+        store.status = Store.STATUS_BLOCKED
+        store.save(update_fields=['status'])
+        messages.success(request, f'"{store.name}" blocked.')
+        notify(store.client, f"Your store {store.name} has been blocked!", store),
 
     return redirect(request.META.get('HTTP_REFERER', reverse('commercials_clients_page')))

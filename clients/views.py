@@ -3,14 +3,35 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.http.response import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import ClientSignupForm, StoreForm, OfferSaleForm
-from .models import Client, Commune, Store, StoreOfferTransaction, StoreStock, OfferSale
 from django.http import JsonResponse
-from clients.backends import EmailBackend
 from django.db.models import Prefetch, F, Q
 from django.db import transaction
 from django.contrib import messages
 from django.urls import reverse
+
+from .forms import ClientSignupForm, StoreForm, OfferSaleForm
+from .models import Client, Commune, Store, StoreOfferTransaction, StoreStock, OfferSale
+from clients.backends import EmailBackend
+
+########## Utils ##########
+
+def client_logout(request):
+    logout(request)
+    return redirect('client_login')
+
+# Used to get communes when selectionning
+# a wilaya in forms
+def get_communes(request):
+    wilaya_code = request.GET.get('wilaya') or request.GET.get('wilaya_code')
+    if not wilaya_code:
+        return JsonResponse([], safe=False)
+
+    padded_code = str(wilaya_code).zfill(2)
+
+    communes = Commune.objects.filter(wilaya_code=padded_code).order_by('name').values('id', 'name')
+    return JsonResponse(list(communes), safe=False)
+
+########## Pages ##########
 
 def client_signup(request):
     if request.method == 'POST':
@@ -31,7 +52,6 @@ def client_signup(request):
         form = ClientSignupForm()
     return render(request, 'clients/client_signup_page.html', {'form': form})
 
-
 def client_login(request):
     if request.method == 'POST':
         email = request.POST.get('email')
@@ -43,21 +63,6 @@ def client_login(request):
         else:
             return render(request, 'clients/client_login_page.html', {'error': 'Invalid credentials'})
     return render(request, 'clients/client_login_page.html')
-
-
-def client_logout(request):
-    logout(request)
-    return redirect('client_login')
-
-def get_communes(request):
-    wilaya_code = request.GET.get('wilaya') or request.GET.get('wilaya_code')
-    if not wilaya_code:
-        return JsonResponse([], safe=False)
-
-    padded_code = str(wilaya_code).zfill(2)
-
-    communes = Commune.objects.filter(wilaya_code=padded_code).order_by('name').values('id', 'name')
-    return JsonResponse(list(communes), safe=False)
 
 @login_required(login_url='client_login')
 def client_dashboard_page(request, username):
@@ -132,7 +137,7 @@ def client_offer_manage_page(request):
         store = stores.filter(id=store_id).first()
     if store is None:
         store = stores.first()
-    
+
     if request.method == 'POST':
         form = OfferSaleForm(request.POST, store=store)
         if form.is_valid():
