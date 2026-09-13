@@ -1,0 +1,2 @@
+djlint . --reformat
+black .
