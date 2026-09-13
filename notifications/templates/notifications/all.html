@@ -1,25 +1,23 @@
-{% extends 'core/client_page_base.html' %}
-
+{% extends "core/client_page_base.html" %}
 {% block content %}
-<div class="container py-4">
-    <h2 class="mb-4">Notifications</h2>
-
-    {% if notifications %}
-        <div class="list-group">
-            {% for n in notifications %}
-                <div class="list-group-item {% if not n.is_read %}list-group-item-light fw-bold{% endif %}">
-                    <div class="d-flex w-100 justify-content-between">
-                        <p class="mb-1">{{ n.message }}</p>
-                        <small class="text-muted">{{ n.created_at|timesince }} ago</small>
+    <div class="container py-4">
+        <h2 class="mb-4">Notifications</h2>
+        {% if notifications %}
+            <div class="list-group">
+                {% for n in notifications %}
+                    <div class="list-group-item {% if not n.is_read %}list-group-item-light fw-bold{% endif %}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <p class="mb-1">{{ n.message }}</p>
+                            <small class="text-muted">{{ n.created_at|timesince }} ago</small>
+                        </div>
+                        {% if n.target %}
+                            <small class="text-muted">Related to: {{ n.target }}</small>
+                        {% endif %}
                     </div>
-                    {% if n.target %}
-                        <small class="text-muted">Related to: {{ n.target }}</small>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="text-muted">You have no notifications yet.</p>
-    {% endif %}
-</div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">You have no notifications yet.</p>
+        {% endif %}
+    </div>
 {% endblock %}

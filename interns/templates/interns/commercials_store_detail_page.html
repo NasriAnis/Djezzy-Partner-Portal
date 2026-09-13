@@ -1,108 +1,126 @@
-{% extends 'interns/interns_base.html' %}
+{% extends "interns/interns_base.html" %}
 {% block title %}{{ store.name }}{% endblock %}
 {% block content %}
-
-<a href="{% url 'commercials_client_detail_page' store.client_id %}" class="btn btn-outline-light btn-sm mb-3">&larr; Back to Client</a>
-
-<div class="d-flex justify-content-between align-items-start mb-4">
-    <div>
-        <h1 class="mb-1">{{ store.name }}</h1>
-        {% if store.status == 'approved' %}
-            <span class="badge bg-success">Active</span>
-        {% elif store.status == 'blocked' %}
-            <span class="badge bg-danger">Blocked</span>
-        {% else %}
-            <span class="badge bg-warning text-dark">Pending Approval</span>
-        {% endif %}
-    </div>
-    <div class="d-flex gap-2">
-        {% if store.status != 'approved' %}
-        <form method="post" action="{% url 'commercials_approve_store' store.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-success">Approve Store</button>
-        </form>
-        {% endif %}
-        {% if store.status != 'blocked' %}
-        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#blockModal{{ store.id }}">
-            Block Store
-        </button>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Block Store Modal -->
-<div class="modal fade" id="blockModal{{ store.id }}" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="post" action="{% url 'commercials_block_store' store.id %}">
-        {% csrf_token %}
-        <div class="modal-header border-secondary">
-          <h5 class="modal-title">Block Store</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <a href="{% url 'commercials_client_detail_page' store.client_id %}"
+       class="btn btn-outline-light btn-sm mb-3">← Back to Client</a>
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1 class="mb-1">{{ store.name }}</h1>
+            {% if store.status == "approved" %}
+                <span class="badge bg-success">Active</span>
+            {% elif store.status == "blocked" %}
+                <span class="badge bg-danger">Blocked</span>
+            {% else %}
+                <span class="badge bg-warning text-dark">Pending Approval</span>
+            {% endif %}
         </div>
-        <div class="modal-body">
-          <label for="block_reason{{ store.id }}" class="form-label">Reason</label>
-          <textarea name="reason" id="block_reason{{ store.id }}" class="form-control" required
-                    placeholder="Write the reason..."></textarea>
+        <div class="d-flex gap-2">
+            {% if store.status != "approved" %}
+                <form method="post" action="{% url 'commercials_approve_store' store.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">Approve Store</button>
+                </form>
+            {% endif %}
+            {% if store.status != "blocked" %}
+                <button type="button"
+                        class="btn btn-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#blockModal{{ store.id }}">Block Store</button>
+            {% endif %}
         </div>
-        <div class="modal-footer border-secondary">
-          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-danger">Confirm Block</button>
-        </div>
-      </form>
     </div>
-  </div>
-</div>
-
-<div class="row g-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title mb-3">Store Details</h5>
-                <dl class="row mb-0">
-                    <dt class="col-5">Owner</dt>
-                    <dd class="col-7">{{ store.client.user.get_full_name|default:store.client.user.username }}</dd>
-
-                    <dt class="col-5">Owner Email</dt>
-                    <dd class="col-7">{{ store.client.user.email }}</dd>
-
-                    <dt class="col-5">Wilaya</dt>
-                    <dd class="col-7">{{ store.get_wilaya_display }}</dd>
-
-                    <dt class="col-5">Commune</dt>
-                    <dd class="col-7">{{ store.comune.name }}</dd>
-
-                    <dt class="col-5">Address</dt>
-                    <dd class="col-7">{{ store.address_line1|default:"—" }}</dd>
-
-                    <dt class="col-5">Phone</dt>
-                    <dd class="col-7">{{ store.phone|default:"—" }}</dd>
-
-                    <dt class="col-5">NIF</dt>
-                    <dd class="col-7">{{ store.nif|default:"—" }}</dd>
-
-                    <dt class="col-5">Created</dt>
-                    <dd class="col-7">{{ store.created_at|date:"d M Y, H:i" }}</dd>
-                </dl>
+    <!-- Block Store Modal -->
+    <div class="modal fade"
+         id="blockModal{{ store.id }}"
+         tabindex="-1"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="{% url 'commercials_block_store' store.id %}">
+                    {% csrf_token %}
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title">Block Store</h5>
+                        <button type="button"
+                                class="btn-close btn-close-white"
+                                data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="block_reason{{ store.id }}" class="form-label">Reason</label>
+                        <textarea name="reason"
+                                  id="block_reason{{ store.id }}"
+                                  class="form-control"
+                                  required
+                                  placeholder="Write the reason..."></textarea>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Confirm Block</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title mb-3">Registre de Commerce (RC)</h5>
-                {% if store.rc %}
-                    <a href="{{ store.rc.url }}" target="_blank">
-                        <img src="{{ store.rc.url }}" alt="RC document" class="img-fluid rounded border" style="border-color: var(--bs-border-color) !important;">
-                    </a>
-                    <a href="{{ store.rc.url }}" target="_blank" class="btn btn-sm btn-outline-light mt-2">Open Full Size</a>
-                {% else %}
-                    <p class="text-secondary mb-0">No RC document uploaded.</p>
-                {% endif %}
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Store Details</h5>
+                    <dl class="row mb-0">
+                        <dt class="col-5">Owner</dt>
+                        <dd class="col-7">
+                            {{ store.client.user.get_full_name|default:store.client.user.username }}
+                        </dd>
+                        <dt class="col-5">Owner Email</dt>
+                        <dd class="col-7">
+                            {{ store.client.user.email }}
+                        </dd>
+                        <dt class="col-5">Wilaya</dt>
+                        <dd class="col-7">
+                            {{ store.get_wilaya_display }}
+                        </dd>
+                        <dt class="col-5">Commune</dt>
+                        <dd class="col-7">
+                            {{ store.comune.name }}
+                        </dd>
+                        <dt class="col-5">Address</dt>
+                        <dd class="col-7">
+                            {{ store.address_line1|default:"—" }}
+                        </dd>
+                        <dt class="col-5">Phone</dt>
+                        <dd class="col-7">
+                            {{ store.phone|default:"—" }}
+                        </dd>
+                        <dt class="col-5">NIF</dt>
+                        <dd class="col-7">
+                            {{ store.nif|default:"—" }}
+                        </dd>
+                        <dt class="col-5">Created</dt>
+                        <dd class="col-7">
+                            {{ store.created_at|date:"d M Y, H:i" }}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Registre de Commerce (RC)</h5>
+                    {% if store.rc %}
+                        <a href="{{ store.rc.url }}" target="_blank">
+                            <img src="{{ store.rc.url }}"
+                                 alt="RC document"
+                                 class="img-fluid rounded border"
+                                 style="border-color: var(--bs-border-color) !important">
+                        </a>
+                        <a href="{{ store.rc.url }}"
+                           target="_blank"
+                           class="btn btn-sm btn-outline-light mt-2">Open Full Size</a>
+                    {% else %}
+                        <p class="text-secondary mb-0">No RC document uploaded.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
-</div>
-
 {% endblock %}

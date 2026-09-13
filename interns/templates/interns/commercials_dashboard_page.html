@@ -1,60 +1,60 @@
-{% extends 'interns/interns_base.html' %}
+{% extends "interns/interns_base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-<h1 class="mb-4">Dashboard</h1>
-
-<div class="row g-3 mb-4">
-    <div class="col-6 col-lg-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="stat-label">Offers</div>
-                <div class="stat-value">{{ offers_count }}</div>
+    <h1 class="mb-4">Dashboard</h1>
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="stat-label">Offers</div>
+                    <div class="stat-value">{{ offers_count }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="stat-label">Clients</div>
+                    <div class="stat-value">{{ clients_count }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="stat-label">Stores</div>
+                    <div class="stat-value">{{ stores_count }}</div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="stat-label">Clients</div>
-                <div class="stat-value">{{ clients_count }}</div>
-            </div>
+    <h5 class="mb-3">Recently Added Stores</h5>
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Store</th>
+                        <th>Client</th>
+                        <th>Wilaya</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for store in recent_stores %}
+                        <tr>
+                            <td>{{ store.name }}</td>
+                            <td>{{ store.client.user.get_full_name|default:store.client.user.username }}</td>
+                            <td>{{ store.get_wilaya_display }}</td>
+                            <td>{{ store.created_at|date:"d M Y" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-secondary">No stores yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="stat-label">Stores</div>
-                <div class="stat-value">{{ stores_count }}</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<h5 class="mb-3">Recently Added Stores</h5>
-<div class="card">
-    <div class="table-responsive">
-        <table class="table table-dark table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>Store</th>
-                    <th>Client</th>
-                    <th>Wilaya</th>
-                    <th>Created</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for store in recent_stores %}
-                <tr>
-                    <td>{{ store.name }}</td>
-                    <td>{{ store.client.user.get_full_name|default:store.client.user.username }}</td>
-                    <td>{{ store.get_wilaya_display }}</td>
-                    <td>{{ store.created_at|date:"d M Y" }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="4" class="text-secondary">No stores yet.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
 {% endblock %}

@@ -1,144 +1,148 @@
-{% extends 'interns/interns_base.html' %}
+{% extends "interns/interns_base.html" %}
 {% block title %}Clients & Stores{% endblock %}
 {% block content %}
-
-<h1 class="mb-4">Clients & Stores</h1>
-
-<ul class="nav djz-quicknav mb-4">
-    <li class="nav-item">
-        <a class="nav-link {% if view_filter == 'all' %}active{% endif %}"
-           href="{% url 'commercials_clients_page' %}?view=all">
-            All Clients &amp; Stores
-        </a>
-    </li>
-
-    <li class="nav-item">
-        <a class="nav-link {% if view_filter == 'pending' %}active{% endif %}"
-           href="{% url 'commercials_clients_page' %}?view=pending">
-            Pending Stores
-        </a>
-    </li>
-
-    <li class="nav-item">
-        <a class="nav-link {% if view_filter == 'pending_offers' %}active{% endif %}"
-           href="{% url 'commercials_clients_page' %}?view=pending_offers">
-            Pending Offers
-        </a>
-    </li>
-</ul>
-
-{% if view_filter == 'pending_offers' %}
-
-<div class="card">
-    <div class="table-responsive">
-        <table class="table table-dark table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>Client</th>
-                    <th>Store</th>
-                    <th>Offer / Plan</th>
-                    <th>Quantity Bought</th>
-                    <th>Date</th>
-                    <th></th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for t in pending_transactions %}
-                <tr>
-                    <td>{{ t.store.client.user.get_full_name|default:t.store.client.user.username }}</td>
-                    <td>{{ t.store.name }}</td>
-                    <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
-                    <td>{{ t.quantity_bought }}</td>
-                    <td>{{ t.created_at|date:"d M Y" }}</td>
-                    <td>
-                        <a href="{% url 'commercials_store_detail_page' t.store.id %}" class="btn btn-sm btn-outline-light">Store Info</a>
-                        <a href="{% url 'commercials_client_detail_page' t.store.client.id %}" class="btn btn-sm btn-outline-light">Client Info</a>
-                    </td>
-                    <td>
-                        {% if t.status != 'approved' %}
-                        <form method="post" action="{% url 'commercials_approve_transaction' t.id %}" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-success">Approve Transaction</button>
-                        </form>
-                        {% endif %}
-                        {% if t.status != 'blocked' %}
-                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#denyModal{{ t.id }}">
-                            Deny Transaction
-                        </button>
-                        {% endif %}
-                    </td>
-                </tr>
-
-                <!-- Deny Transaction Modal -->
-                <div class="modal fade" id="denyModal{{ t.id }}" tabindex="-1" aria-hidden="true">
-                  <div class="modal-dialog">
-                    <div class="modal-content">
-                      <form method="post" action="{% url 'commercials_deny_transaction' t.id %}">
-                        {% csrf_token %}
-                        <div class="modal-header border-secondary">
-                          <h5 class="modal-title">Deny Transaction</h5>
-                          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                          <label for="deny_reason{{ t.id }}" class="form-label">Reason</label>
-                          <textarea name="reason" id="deny_reason{{ t.id }}" class="form-control" required
-                                    placeholder="Write the reason..."></textarea>
-                        </div>
-                        <div class="modal-footer border-secondary">
-                          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
-                          <button type="submit" class="btn btn-danger">Confirm Deny</button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-                {% empty %}
-                <tr><td colspan="7" class="text-secondary">No pending offers.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-{% else %}
-
-<div class="card">
-    <div class="table-responsive">
-        <table class="table table-dark table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>Client</th>
-                    <th>Email</th>
-                    <th>Stores</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for client in clients %}
-                <tr>
-                    <td>{{ client.user.get_full_name|default:client.user.username }}</td>
-                    <td>{{ client.user.email }}</td>
-                    <td>{{ client.locations.count }}</td>
-                    <td>
-                        {% if client.inactive_locations_count > 0 %}
-                            <span class="badge bg-warning text-dark">{{ client.inactive_locations_count }} pending</span>
-                        {% else %}
-                            <span class="badge bg-success">All active</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{% url 'commercials_client_detail_page' client.id %}" class="btn btn-sm btn-outline-light">View</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="5" class="text-secondary">No clients found.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-{% endif %}
+    <h1 class="mb-4">Clients & Stores</h1>
+    <ul class="nav djz-quicknav mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if view_filter == 'all' %}active{% endif %}"
+               href="{% url 'commercials_clients_page' %}?view=all">All Clients &amp; Stores</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if view_filter == 'pending' %}active{% endif %}"
+               href="{% url 'commercials_clients_page' %}?view=pending">Pending Stores</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if view_filter == 'pending_offers' %}active{% endif %}"
+               href="{% url 'commercials_clients_page' %}?view=pending_offers">Pending Offers</a>
+        </li>
+    </ul>
+    {% if view_filter == "pending_offers" %}
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Store</th>
+                            <th>Offer / Plan</th>
+                            <th>Quantity Bought</th>
+                            <th>Date</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in pending_transactions %}
+                            <tr>
+                                <td>{{ t.store.client.user.get_full_name|default:t.store.client.user.username }}</td>
+                                <td>{{ t.store.name }}</td>
+                                <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
+                                <td>{{ t.quantity_bought }}</td>
+                                <td>{{ t.created_at|date:"d M Y" }}</td>
+                                <td>
+                                    <a href="{% url 'commercials_store_detail_page' t.store.id %}"
+                                       class="btn btn-sm btn-outline-light">Store Info</a>
+                                    <a href="{% url 'commercials_client_detail_page' t.store.client.id %}"
+                                       class="btn btn-sm btn-outline-light">Client Info</a>
+                                </td>
+                                <td>
+                                    {% if t.status != "approved" %}
+                                        <form method="post"
+                                              action="{% url 'commercials_approve_transaction' t.id %}"
+                                              class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-success">Approve Transaction</button>
+                                        </form>
+                                    {% endif %}
+                                    {% if t.status != "blocked" %}
+                                        <button type="button"
+                                                class="btn btn-danger"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#denyModal{{ t.id }}">Deny Transaction</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <!-- Deny Transaction Modal -->
+                            <div class="modal fade"
+                                 id="denyModal{{ t.id }}"
+                                 tabindex="-1"
+                                 aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form method="post" action="{% url 'commercials_deny_transaction' t.id %}">
+                                            {% csrf_token %}
+                                            <div class="modal-header border-secondary">
+                                                <h5 class="modal-title">Deny Transaction</h5>
+                                                <button type="button"
+                                                        class="btn-close btn-close-white"
+                                                        data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <label for="deny_reason{{ t.id }}" class="form-label">Reason</label>
+                                                <textarea name="reason"
+                                                          id="deny_reason{{ t.id }}"
+                                                          class="form-control"
+                                                          required
+                                                          placeholder="Write the reason..."></textarea>
+                                            </div>
+                                            <div class="modal-footer border-secondary">
+                                                <button type="button"
+                                                        class="btn btn-outline-light"
+                                                        data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-danger">Confirm Deny</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-secondary">No pending offers.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Email</th>
+                            <th>Stores</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client in clients %}
+                            <tr>
+                                <td>{{ client.user.get_full_name|default:client.user.username }}</td>
+                                <td>{{ client.user.email }}</td>
+                                <td>{{ client.locations.count }}</td>
+                                <td>
+                                    {% if client.inactive_locations_count > 0 %}
+                                        <span class="badge bg-warning text-dark">{{ client.inactive_locations_count }} pending</span>
+                                    {% else %}
+                                        <span class="badge bg-success">All active</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'commercials_client_detail_page' client.id %}"
+                                       class="btn btn-sm btn-outline-light">View</a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-secondary">No clients found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}

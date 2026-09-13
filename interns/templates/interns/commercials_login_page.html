@@ -1,23 +1,32 @@
-{% extends 'interns/interns_base.html' %}
+{% extends "interns/interns_base.html" %}
 {% block title %}Log in{% endblock %}
 {% block content %}
-<div class="container-fluid d-flex align-items-center justify-content-center" style="min-height: 80vh;">
-    <div class="auth-card" style="max-width: 400px; width: 100%;">
-        <h1 class="mb-2" style="font-size: 1.6rem;">Log in</h1>
-        <p class="text-secondary small mb-4">Commercial team access.</p>
-        <form method="post">
-            {% csrf_token %}
-            <div class="mb-3">
-                <label class="form-label small text-secondary">Email</label>
-                <input type="email" name="email" class="form-control" placeholder="you@djezzy.com" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label small text-secondary">Password</label>
-                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
-            </div>
-            <button type="submit" class="btn btn-primary w-100 mt-2">Log in</button>
-        </form>
-        {% if error %}<div class="alert alert-danger mt-3 py-2 small">{{ error }}</div>{% endif %}
+    <div class="container-fluid d-flex align-items-center justify-content-center"
+         style="min-height: 80vh">
+        <div class="auth-card" style="max-width: 400px; width: 100%;">
+            <h1 class="mb-2" style="font-size: 1.6rem;">Log in</h1>
+            <p class="text-secondary small mb-4">Commercial team access.</p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">Email</label>
+                    <input type="email"
+                           name="email"
+                           class="form-control"
+                           placeholder="you@djezzy.com"
+                           required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">Password</label>
+                    <input type="password"
+                           name="password"
+                           class="form-control"
+                           placeholder="••••••••"
+                           required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mt-2">Log in</button>
+            </form>
+            {% if error %}<div class="alert alert-danger mt-3 py-2 small">{{ error }}</div>{% endif %}
+        </div>
     </div>
-</div>
 {% endblock %}

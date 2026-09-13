@@ -1,350 +1,385 @@
-{% extends 'core/client_page_base.html' %}
+{% extends "core/client_page_base.html" %}
 {% block title %}My Account{% endblock %}
 {% block content %}
-
-<div class="container" style="max-width: 760px;">
-
-    <!-- Quick nav -->
-    <ul class="nav djz-quicknav mb-4 sticky-top bg-dark py-2" style="top: 70px;">
-        <li class="nav-item">
-            <a class="nav-link" href="#account">Account</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="#stores">Stores</a>
-        </li>
-    </ul>
-
-    <!-- ============ ACCOUNT SECTION ============ -->
-    <section id="account" class="mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="mb-0" style="font-size: 1.6rem;">My Account</h1>
-            <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#editClientModal">
-                Edit
-            </button>
-        </div>
-        <ul class="list-group mb-4">
-            <li class="list-group-item d-flex justify-content-between">
-                <span class="text-secondary">Name</span>
-                <span>{{ client.user.first_name }} {{ client.user.last_name }}</span>
+    <div class="container" style="max-width: 760px;">
+        <!-- Quick nav -->
+        <ul class="nav djz-quicknav mb-4 sticky-top bg-dark py-2"
+            style="top: 70px">
+            <li class="nav-item">
+                <a class="nav-link" href="#account">Account</a>
             </li>
-            <li class="list-group-item d-flex justify-content-between">
-                <span class="text-secondary">Username</span>
-                <span>{{ client.user.username }}</span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between">
-                <span class="text-secondary">Email</span>
-                <span>{{ client.user.email }}</span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between">
-                <span class="text-secondary">Phone</span>
-                <span>{{ client.phone|default:"—" }}</span>
+            <li class="nav-item">
+                <a class="nav-link" href="#stores">Stores</a>
             </li>
         </ul>
-
-        <form action="{% url 'client_logout' %}" method="post">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-outline-danger w-100">Log out</button>
-        </form>
-    </section>
-
-    <!-- ============ STORES SECTION ============ -->
-    <section id="stores" class="mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0" style="font-size: 1.3rem;">My Stores</h2>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#storeModal"> + Add Store </button>
-        </div>
-
-        {% if active_stores %}
-        <div class="card">
-            <div class="table-responsive">
-                <table class="table table-dark table-hover align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>Name</th>
-                            <th>Address</th>
-                            <th>Wilaya</th>
-                            <th>Commune</th>
-                            <th>Phone</th>
-                            <th>Created</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for store in active_stores %}
-                        <tr>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-outline-light"
-                                        data-bs-toggle="collapse" data-bs-target="#store-details-{{ store.id }}"
-                                        aria-expanded="false" aria-controls="store-details-{{ store.id }}">
-                                    &#9662;
-                                </button>
-                            </td>
-                            <td>{{ store.name }}</td>
-                            <td>{{ store.address_line1 }}</td>
-                            <td>{{ store.get_wilaya_display }}</td>
-                            <td>{{ store.comune.name }}</td>
-                            <td class="{% if not store.phone %}text-muted{% endif %}">{{ store.phone|default:"—" }}</td>
-                            <td>{{ store.created_at|date:"d M Y" }}</td>
-                            <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-outline-light"
-                                        data-bs-toggle="modal" data-bs-target="#editStoreModal"
-                                        data-store-id="{{ store.id }}"
-                                        data-store-name="{{ store.name }}"
-                                        data-store-address="{{ store.address_line1 }}"
-                                        data-store-wilaya-label="{{ store.get_wilaya_display }}"
-                                        data-store-commune-name="{{ store.comune.name }}"
-                                        data-store-phone="{{ store.phone|default:'' }}">
-                                    Edit
-                                </button>
-                            </td>
-                        </tr>
-                        <tr class="collapse" id="store-details-{{ store.id }}">
-                            <td colspan="8" class="p-0 border-0">
-                                <div class="p-3" style="background: var(--djz-surface-2);">
-                                    <h6 class="text-secondary mb-3">Offers &amp; Stock — {{ store.name }}</h6>
-                                    {% with store.transactions.all as store_transactions %}
-                                    {% if store_transactions %}
-                                    <table class="table table-sm table-dark mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th>Offer / Plan</th>
-                                                <th>Bought</th>
-                                                <th>Status</th>
-                                                <th>Date</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for t in store_transactions %}
-                                            <tr>
-                                                <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
-                                                <td>{{ t.quantity_bought }}</td>
-                                                <td>
-                                                    {% if t.status == 'approved' %}
-                                                        <span class="badge bg-success">Approved</span>
-                                                    {% elif t.status == 'blocked' %}
-                                                        <span class="badge bg-danger text-dark">Blocked</span>
+        <!-- ============ ACCOUNT SECTION ============ -->
+        <section id="account" class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="mb-0" style="font-size: 1.6rem;">My Account</h1>
+                <button type="button"
+                        class="btn btn-outline-light btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editClientModal">Edit</button>
+            </div>
+            <ul class="list-group mb-4">
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-secondary">Name</span>
+                    <span>{{ client.user.first_name }} {{ client.user.last_name }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-secondary">Username</span>
+                    <span>{{ client.user.username }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-secondary">Email</span>
+                    <span>{{ client.user.email }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-secondary">Phone</span>
+                    <span>{{ client.phone|default:"—" }}</span>
+                </li>
+            </ul>
+            <form action="{% url 'client_logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger w-100">Log out</button>
+            </form>
+        </section>
+        <!-- ============ STORES SECTION ============ -->
+        <section id="stores" class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0" style="font-size: 1.3rem;">My Stores</h2>
+                <button type="button"
+                        class="btn btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#storeModal">+ Add Store</button>
+            </div>
+            {% if active_stores %}
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Name</th>
+                                    <th>Address</th>
+                                    <th>Wilaya</th>
+                                    <th>Commune</th>
+                                    <th>Phone</th>
+                                    <th>Created</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for store in active_stores %}
+                                    <tr>
+                                        <td>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-light"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#store-details-{{ store.id }}"
+                                                    aria-expanded="false"
+                                                    aria-controls="store-details-{{ store.id }}">▾</button>
+                                        </td>
+                                        <td>{{ store.name }}</td>
+                                        <td>{{ store.address_line1 }}</td>
+                                        <td>{{ store.get_wilaya_display }}</td>
+                                        <td>{{ store.comune.name }}</td>
+                                        <td class="{% if not store.phone %}text-muted{% endif %}">{{ store.phone|default:"—" }}</td>
+                                        <td>{{ store.created_at|date:"d M Y" }}</td>
+                                        <td class="text-end">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-light"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editStoreModal"
+                                                    data-store-id="{{ store.id }}"
+                                                    data-store-name="{{ store.name }}"
+                                                    data-store-address="{{ store.address_line1 }}"
+                                                    data-store-wilaya-label="{{ store.get_wilaya_display }}"
+                                                    data-store-commune-name="{{ store.comune.name }}"
+                                                    data-store-phone="{{ store.phone|default:'' }}">Edit</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="collapse" id="store-details-{{ store.id }}">
+                                        <td colspan="8" class="p-0 border-0">
+                                            <div class="p-3" style="background: var(--djz-surface-2);">
+                                                <h6 class="text-secondary mb-3">Offers &amp; Stock — {{ store.name }}</h6>
+                                                {% with store.transactions.all as store_transactions %}
+                                                    {% if store_transactions %}
+                                                        <table class="table table-sm table-dark mb-0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Offer / Plan</th>
+                                                                    <th>Bought</th>
+                                                                    <th>Status</th>
+                                                                    <th>Date</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for t in store_transactions %}
+                                                                    <tr>
+                                                                        <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
+                                                                        <td>{{ t.quantity_bought }}</td>
+                                                                        <td>
+                                                                            {% if t.status == "approved" %}
+                                                                                <span class="badge bg-success">Approved</span>
+                                                                            {% elif t.status == "blocked" %}
+                                                                                <span class="badge bg-danger text-dark">Blocked</span>
+                                                                            {% else %}
+                                                                                <span class="badge bg-warning text-dark">Pending</span>
+                                                                            {% endif %}
+                                                                        </td>
+                                                                        <td>{{ t.created_at|date:"d M Y" }}</td>
+                                                                    </tr>
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
                                                     {% else %}
-                                                        <span class="badge bg-warning text-dark">Pending</span>
+                                                        <p class="text-secondary mb-0">No offers purchased for this store yet.</p>
                                                     {% endif %}
-                                                </td>
-                                                <td>{{ t.created_at|date:"d M Y" }}</td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                    {% else %}
-                                    <p class="text-secondary mb-0">No offers purchased for this store yet.</p>
-                                    {% endif %}
-                                    {% endwith %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                                {% endwith %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-shop" style="font-size: 1.8rem;"></i>
+                    <p class="mb-0 mt-2">You haven't added any stores yet.</p>
+                </div>
+            {% endif %}
+        </section>
+        <!-- ============ UNDER REVIEW STORES SECTION ============ -->
+        <section id="under_review_stores" class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0" style="font-size: 1.3rem;">Stores History</h2>
+            </div>
+            {% if pending_blocked_stores %}
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Address</th>
+                                    <th>Wilaya</th>
+                                    <th>Commune</th>
+                                    <th>Phone</th>
+                                    <th>Created</th>
+                                    <th>status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for store in pending_blocked_stores %}
+                                    <tr>
+                                        <td>{{ store.name }}</td>
+                                        <td>{{ store.address_line1 }}</td>
+                                        <td>{{ store.get_wilaya_display }}</td>
+                                        <td>{{ store.comune.name }}</td>
+                                        <td class="{% if not store.phone %}text-muted{% endif %}">{{ store.phone|default:"—" }}</td>
+                                        <td>{{ store.created_at|date:"d M Y" }}</td>
+                                        {% if store.status == "pending" %}
+                                            <td><span class="badge bg-warning">Pending</span></td>
+                                        {% elif store.status == "blocked" %}
+                                            <td><span class="badge bg-danger">Blocked</span></td>
+                                        {% endif %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-hourglass-split" style="font-size: 1.8rem;"></i>
+                    <p class="mb-0 mt-2">You have no under review stores.</p>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+    <!-- ============ EDIT CLIENT MODAL ============ -->
+    <div class="modal fade"
+         id="editClientModal"
+         tabindex="-1"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="edit_client">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title">Edit Account Information</h5>
+                        <button type="button"
+                                class="btn-close btn-close-white"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">First name</label>
+                            <input type="text"
+                                   name="first_name"
+                                   class="form-control"
+                                   value="{{ client.user.first_name }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Last name</label>
+                            <input type="text"
+                                   name="last_name"
+                                   class="form-control"
+                                   value="{{ client.user.last_name }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email"
+                                   name="email"
+                                   class="form-control"
+                                   value="{{ client.user.email }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="text"
+                                   name="phone"
+                                   class="form-control"
+                                   value="{{ client.phone }}">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
             </div>
         </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="bi bi-shop" style="font-size: 1.8rem;"></i>
-            <p class="mb-0 mt-2">You haven't added any stores yet.</p>
-        </div>
-        {% endif %}
-    </section>
-
-    <!-- ============ UNDER REVIEW STORES SECTION ============ -->
-    <section id="under_review_stores" class="mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0" style="font-size: 1.3rem;">Stores History</h2>
-        </div>
-
-        {% if pending_blocked_stores %}
-        <div class="card">
-            <div class="table-responsive">
-                <table class="table table-dark table-hover align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Address</th>
-                            <th>Wilaya</th>
-                            <th>Commune</th>
-                            <th>Phone</th>
-                            <th>Created</th>
-                            <th>status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for store in pending_blocked_stores %}
-                        <tr>
-                            <td>{{ store.name }}</td>
-                            <td>{{ store.address_line1 }}</td>
-                            <td>{{ store.get_wilaya_display }}</td>
-                            <td>{{ store.comune.name }}</td>
-                            <td class="{% if not store.phone %}text-muted{% endif %}">{{ store.phone|default:"—" }}</td>
-                            <td>{{ store.created_at|date:"d M Y" }}</td>
-                            {% if store.status == 'pending' %}
-                                <td><span class="badge bg-warning">Pending</span></td>
-                            {% elif store.status == 'blocked' %}
-                                <td><span class="badge bg-danger">Blocked</span></td>
-                            {% endif %}
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    </div>
+    <!-- ============ ADD STORE MODAL ============ -->
+    <div class="modal fade {% if form.errors %}show{% endif %}"
+         id="storeModal"
+         tabindex="-1"
+         aria-labelledby="storeModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="add_store">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title" id="storeModalLabel">Add New Store</h5>
+                        <button type="button"
+                                class="btn-close btn-close-white"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {% if form.errors %}
+                            <div class="alert alert-danger py-2">Please fix the errors below.</div>
+                        {% endif %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.name.label }}</label>
+                            {{ form.name }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.address_line1.label }}</label>
+                            {{ form.address_line1 }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.wilaya.label }}</label>
+                            {{ form.wilaya }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.comune.label }}</label>
+                            {{ form.comune }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.phone.label }}</label>
+                            {{ form.phone }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.rc.label }} <span class="text-danger">*</span></label>
+                            {{ form.rc }}
+                            {% for error in form.rc.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.nif.label }} <span class="text-danger">*</span></label>
+                            {{ form.nif }}
+                            {% for error in form.nif.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Store</button>
+                    </div>
+                </form>
             </div>
         </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="bi bi-hourglass-split" style="font-size: 1.8rem;"></i>
-            <p class="mb-0 mt-2">You have no under review stores.</p>
-        </div>
-        {% endif %}
-    </section>
-
-</div>
-
-<!-- ============ EDIT CLIENT MODAL ============ -->
-<div class="modal fade" id="editClientModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="edit_client">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title">Edit Account Information</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">First name</label>
-                        <input type="text" name="first_name" class="form-control" value="{{ client.user.first_name }}">
+    </div>
+    <!-- ============ SHARED EDIT STORE MODAL ============ -->
+    <div class="modal fade"
+         id="editStoreModal"
+         tabindex="-1"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" id="editStoreForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="edit_store">
+                    <input type="hidden" name="store_id" id="editStoreId" value="">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title">Edit Store</h5>
+                        <button type="button"
+                                class="btn-close btn-close-white"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"></button>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Last name</label>
-                        <input type="text" name="last_name" class="form-control" value="{{ client.user.last_name }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text"
+                                   name="name"
+                                   id="editStoreName"
+                                   class="form-control"
+                                   required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Address</label>
+                            <input type="text"
+                                   name="address_line1"
+                                   id="editStoreAddress"
+                                   class="form-control"
+                                   required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Wilaya</label>
+                            <input type="text" id="editStoreWilayaDisplay" class="form-control" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Commune</label>
+                            <input type="text"
+                                   id="editStoreCommuneDisplay"
+                                   class="form-control"
+                                   disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="text" name="phone" id="editStorePhone" class="form-control">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" name="email" class="form-control" value="{{ client.user.email }}">
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Phone</label>
-                        <input type="text" name="phone" class="form-control" value="{{ client.phone }}">
-                    </div>
-                </div>
-                <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
-</div>
-
-<!-- ============ ADD STORE MODAL ============ -->
-<div class="modal fade {% if form.errors %}show{% endif %}" id="storeModal" tabindex="-1" aria-labelledby="storeModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="add_store">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title" id="storeModalLabel">Add New Store</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    {% if form.errors %}
-                    <div class="alert alert-danger py-2">Please fix the errors below.</div>
-                    {% endif %}
-                    <div class="mb-3">
-                        <label class="form-label">{{ form.name.label }}</label>
-                        {{ form.name }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">{{ form.address_line1.label }}</label>
-                        {{ form.address_line1 }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">{{ form.wilaya.label }}</label>
-                        {{ form.wilaya }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">{{ form.comune.label }}</label>
-                        {{ form.comune }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">{{ form.phone.label }}</label>
-                        {{ form.phone }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">{{ form.rc.label }} <span class="text-danger">*</span></label>
-                        {{ form.rc }}
-                        {% for error in form.rc.errors %}
-                        <div class="text-danger small mt-1">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">{{ form.nif.label }} <span class="text-danger">*</span></label>
-                        {{ form.nif }}
-                        {% for error in form.nif.errors %}
-                        <div class="text-danger small mt-1">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Store</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- ============ SHARED EDIT STORE MODAL ============ -->
-<div class="modal fade" id="editStoreModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="post" id="editStoreForm">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="edit_store">
-                <input type="hidden" name="store_id" id="editStoreId" value="">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title">Edit Store</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" name="name" id="editStoreName" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Address</label>
-                        <input type="text" name="address_line1" id="editStoreAddress" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Wilaya</label>
-                        <input type="text" id="editStoreWilayaDisplay" class="form-control" disabled>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Commune</label>
-                        <input type="text" id="editStoreCommuneDisplay" class="form-control" disabled>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Phone</label>
-                        <input type="text" name="phone" id="editStorePhone" class="form-control">
-                    </div>
-                </div>
-                <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
+    <script>
     {% if form.errors %}
     document.addEventListener('DOMContentLoaded', function () {
         const modal = new bootstrap.Modal(document.getElementById('storeModal'));
@@ -421,5 +456,5 @@
             document.getElementById('editStorePhone').value = btn.getAttribute('data-store-phone');
         });
     });
-</script>
+    </script>
 {% endblock %}

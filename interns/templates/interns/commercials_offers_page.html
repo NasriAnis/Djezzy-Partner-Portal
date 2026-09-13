@@ -1,228 +1,252 @@
-{% extends 'interns/interns_base.html' %}
+{% extends "interns/interns_base.html" %}
 {% block title %}Offers{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Offers</h1>
-    {% if can_edit %}
-    <div class="d-flex gap-2">
-        <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#categoryModal">
-            + Add Category
-        </button>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#offerModal">
-            + Add Offer
-        </button>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Offers</h1>
+        {% if can_edit %}
+            <div class="d-flex gap-2">
+                <button type="button"
+                        class="btn btn-outline-light"
+                        data-bs-toggle="modal"
+                        data-bs-target="#categoryModal">+ Add Category</button>
+                <button type="button"
+                        class="btn btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#offerModal">+ Add Offer</button>
+            </div>
+        {% endif %}
     </div>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} py-2">{{ message }}</div>
+        {% endfor %}
     {% endif %}
-</div>
-
-{% if messages %}
-{% for message in messages %}
-<div class="alert alert-{{ message.tags }} py-2">{{ message }}</div>
-{% endfor %}
-{% endif %}
-
-<!-- ============ CATEGORIES + NESTED OFFERS ============ -->
-{% for category in categories %}
-<div class="card mb-3">
-    <div class="card-header d-flex justify-content-between align-items-center"
-         style="cursor: pointer;"
-         data-bs-toggle="collapse"
-         data-bs-target="#offersCollapse{{ category.id }}"
-         aria-expanded="false"
-         aria-controls="offersCollapse{{ category.id }}">
-        <div class="d-flex align-items-center gap-2">
-            <span class="fw-semibold">{{ category.name }}</span>
-            <span class="badge bg-secondary">{{ category.offers.count }} offer{{ category.offers.count|pluralize }}</span>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            {% if can_edit %}
-            <button type="button" class="btn btn-sm btn-outline-light"
-                    data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ category.id }}"
-                    onclick="event.stopPropagation();">
-                Edit
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-danger"
-                    data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.id }}"
-                    onclick="event.stopPropagation();">
-                Delete
-            </button>
-            {% endif %}
-            <span class="text-secondary">▾</span>
-        </div>
-    </div>
-
-    <div class="collapse" id="offersCollapse{{ category.id }}">
-        <div class="card-body">
-            <div class="row g-4">
-                {% for offer in category.offers.all %}
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card h-100" style="background: var(--djz-surface-2);">
-                        <div class="card-body d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="card-title mb-0">{{ offer.title }}</h5>
-                                <div class="d-flex gap-1">
-                                    {% if offer.is_new %}<span class="badge bg-info text-dark">New</span>{% endif %}
-                                    <span class="badge {% if offer.is_active %}bg-success{% else %}bg-secondary{% endif %}">
-                                        {% if offer.is_active %}Active{% else %}Inactive{% endif %}
-                                    </span>
+    <!-- ============ CATEGORIES + NESTED OFFERS ============ -->
+    {% for category in categories %}
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center"
+                 style="cursor: pointer"
+                 data-bs-toggle="collapse"
+                 data-bs-target="#offersCollapse{{ category.id }}"
+                 aria-expanded="false"
+                 aria-controls="offersCollapse{{ category.id }}">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-semibold">{{ category.name }}</span>
+                    <span class="badge bg-secondary">{{ category.offers.count }} offer{{ category.offers.count|pluralize }}</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    {% if can_edit %}
+                        <button type="button"
+                                class="btn btn-sm btn-outline-light"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editCategoryModal{{ category.id }}"
+                                onclick="event.stopPropagation();">Edit</button>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteCategoryModal{{ category.id }}"
+                                onclick="event.stopPropagation();">Delete</button>
+                    {% endif %}
+                    <span class="text-secondary">▾</span>
+                </div>
+            </div>
+            <div class="collapse" id="offersCollapse{{ category.id }}">
+                <div class="card-body">
+                    <div class="row g-4">
+                        {% for offer in category.offers.all %}
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <div class="card h-100" style="background: var(--djz-surface-2);">
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h5 class="card-title mb-0">{{ offer.title }}</h5>
+                                            <div class="d-flex gap-1">
+                                                {% if offer.is_new %}<span class="badge bg-info text-dark">New</span>{% endif %}
+                                                <span class="badge {% if offer.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                                    {% if offer.is_active %}Active{% else %}Inactive{% endif %}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <p class="text-secondary small mb-3">{{ offer.description|truncatewords:15 }}</p>
+                                        <p class="text-secondary small mb-3">{{ offer.plans.count }} plan(s)</p>
+                                        <a href="{% url 'commercials_offer_edit_page' offer.slug %}"
+                                           class="btn btn-outline-light mt-auto">Manage Offer</a>
+                                    </div>
                                 </div>
                             </div>
-                            <p class="text-secondary small mb-3">{{ offer.description|truncatewords:15 }}</p>
-                            <p class="text-secondary small mb-3">{{ offer.plans.count }} plan(s)</p>
-                            <a href="{% url 'commercials_offer_edit_page' offer.slug %}" class="btn btn-outline-light mt-auto">
-                                Manage Offer
-                            </a>
-                        </div>
+                        {% empty %}
+                            <p class="text-secondary mb-0">No offers in this category yet.</p>
+                        {% endfor %}
                     </div>
                 </div>
-                {% empty %}
-                <p class="text-secondary mb-0">No offers in this category yet.</p>
-                {% endfor %}
+            </div>
+        </div>
+    {% empty %}
+        <p class="text-secondary">No categories yet.</p>
+    {% endfor %}
+    <!-- ============ ADD CATEGORY MODAL ============ -->
+    <div class="modal fade"
+         id="categoryModal"
+         tabindex="-1"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="add_category">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title">Add Category</h5>
+                        <button type="button"
+                                class="btn-close btn-close-white"
+                                data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">{{ category_form.name.label }}</label>
+                            {{ category_form.name }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ category_form.order.label }}</label>
+                            {{ category_form.order }}
+                            <div class="form-text">Controls display order — lower shows first.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Category</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-</div>
-{% empty %}
-<p class="text-secondary">No categories yet.</p>
-{% endfor %}
-
-<!-- ============ ADD CATEGORY MODAL ============ -->
-<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="add_category">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title">Add Category</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">{{ category_form.name.label }}</label>
-                        {{ category_form.name }}
+    <!-- ============ EDIT / DELETE CATEGORY MODALS ============ -->
+    {% if can_edit %}
+        {% for category in categories %}
+            <div class="modal fade"
+                 id="editCategoryModal{{ category.id }}"
+                 tabindex="-1"
+                 aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="edit_category">
+                            <input type="hidden" name="category_id" value="{{ category.id }}">
+                            <div class="modal-header border-secondary">
+                                <h5 class="modal-title">Edit Category</h5>
+                                <button type="button"
+                                        class="btn-close btn-close-white"
+                                        data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Name</label>
+                                    <input type="text"
+                                           name="name"
+                                           class="form-control"
+                                           value="{{ category.name }}"
+                                           required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Order</label>
+                                    <input type="number"
+                                           name="order"
+                                           class="form-control"
+                                           value="{{ category.order }}">
+                                    <div class="form-text">Controls display order — lower shows first.</div>
+                                </div>
+                            </div>
+                            <div class="modal-footer border-secondary">
+                                <button type="button"
+                                        class="btn btn-outline-light"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </div>
+                        </form>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">{{ category_form.order.label }}</label>
-                        {{ category_form.order }}
-                        <div class="form-text">Controls display order — lower shows first.</div>
+                </div>
+            </div>
+            <div class="modal fade"
+                 id="deleteCategoryModal{{ category.id }}"
+                 tabindex="-1"
+                 aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="delete_category">
+                            <input type="hidden" name="category_id" value="{{ category.id }}">
+                            <div class="modal-header border-secondary">
+                                <h5 class="modal-title">Delete Category</h5>
+                                <button type="button"
+                                        class="btn-close btn-close-white"
+                                        data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                {% if category.offers.count %}
+                                    <p class="mb-0 text-warning">"{{ category.name }}" has {{ category.offers.count }} offer(s) assigned to it and can't be deleted until they're reassigned or removed.</p>
+                                {% else %}
+                                    <p class="mb-0">Delete <strong>{{ category.name }}</strong>? This can't be undone.</p>
+                                {% endif %}
+                            </div>
+                            <div class="modal-footer border-secondary">
+                                <button type="button"
+                                        class="btn btn-outline-light"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit"
+                                        class="btn btn-danger"
+                                        {% if category.offers.count %}disabled{% endif %}>Delete</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-                <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Category</button>
-                </div>
-            </form>
+            </div>
+        {% endfor %}
+    {% endif %}
+    <!-- ============ ADD OFFER MODAL ============ -->
+    <div class="modal fade" id="offerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="add_offer">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title">Add Offer</h5>
+                        <button type="button"
+                                class="btn-close btn-close-white"
+                                data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">{{ offer_form.category.label }}</label>
+                            {{ offer_form.category }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ offer_form.title.label }}</label>
+                            {{ offer_form.title }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ offer_form.description.label }}</label>
+                            {{ offer_form.description }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ offer_form.image.label }}</label>
+                            {{ offer_form.image }}
+                        </div>
+                        <div class="form-check mb-2">
+                            {{ offer_form.is_active }}
+                            <label class="form-check-label">Active</label>
+                        </div>
+                        <div class="form-check mb-3">
+                            {{ offer_form.is_new }}
+                            <label class="form-check-label">Mark as New</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Offer</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
-
-<!-- ============ EDIT / DELETE CATEGORY MODALS ============ -->
-{% if can_edit %}
-{% for category in categories %}
-<div class="modal fade" id="editCategoryModal{{ category.id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="edit_category">
-                <input type="hidden" name="category_id" value="{{ category.id }}">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title">Edit Category</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" name="name" class="form-control" value="{{ category.name }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Order</label>
-                        <input type="number" name="order" class="form-control" value="{{ category.order }}">
-                        <div class="form-text">Controls display order — lower shows first.</div>
-                    </div>
-                </div>
-                <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="deleteCategoryModal{{ category.id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="delete_category">
-                <input type="hidden" name="category_id" value="{{ category.id }}">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title">Delete Category</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    {% if category.offers.count %}
-                    <p class="mb-0 text-warning">"{{ category.name }}" has {{ category.offers.count }} offer(s) assigned to it and can't be deleted until they're reassigned or removed.</p>
-                    {% else %}
-                    <p class="mb-0">Delete <strong>{{ category.name }}</strong>? This can't be undone.</p>
-                    {% endif %}
-                </div>
-                <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger" {% if category.offers.count %}disabled{% endif %}>Delete</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endfor %}
-{% endif %}
-
-<!-- ============ ADD OFFER MODAL ============ -->
-<div class="modal fade" id="offerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="add_offer">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title">Add Offer</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">{{ offer_form.category.label }}</label>
-                        {{ offer_form.category }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">{{ offer_form.title.label }}</label>
-                        {{ offer_form.title }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">{{ offer_form.description.label }}</label>
-                        {{ offer_form.description }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">{{ offer_form.image.label }}</label>
-                        {{ offer_form.image }}
-                    </div>
-                    <div class="form-check mb-2">
-                        {{ offer_form.is_active }}
-                        <label class="form-check-label">Active</label>
-                    </div>
-                    <div class="form-check mb-3">
-                        {{ offer_form.is_new }}
-                        <label class="form-check-label">Mark as New</label>
-                    </div>
-                </div>
-                <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Offer</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 {% endblock %}

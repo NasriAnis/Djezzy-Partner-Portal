@@ -2,22 +2,64 @@ from django.db import models
 from django.utils.text import slugify
 
 WILAYA_CHOICES = [
-    ('01', 'Adrar'), ('02', 'Chlef'), ('03', 'Laghouat'), ('04', 'Oum El Bouaghi'),
-    ('05', 'Batna'), ('06', 'Béjaïa'), ('07', 'Biskra'), ('08', 'Béchar'),
-    ('09', 'Blida'), ('10', 'Bouira'), ('11', 'Tamanrasset'), ('12', 'Tébessa'),
-    ('13', 'Tlemcen'), ('14', 'Tiaret'), ('15', 'Tizi Ouzou'), ('16', 'Alger'),
-    ('17', 'Djelfa'), ('18', 'Jijel'), ('19', 'Sétif'), ('20', 'Saïda'),
-    ('21', 'Skikda'), ('22', 'Sidi Bel Abbès'), ('23', 'Annaba'), ('24', 'Guelma'),
-    ('25', 'Constantine'), ('26', 'Médéa'), ('27', 'Mostaganem'), ('28', "M'Sila"),
-    ('29', 'Mascara'), ('30', 'Ouargla'), ('31', 'Oran'), ('32', 'El Bayadh'),
-    ('33', 'Illizi'), ('34', 'Bordj Bou Arréridj'), ('35', 'Boumerdès'),
-    ('36', 'El Tarf'), ('37', 'Tindouf'), ('38', 'Tissemsilt'), ('39', 'El Oued'),
-    ('40', 'Khenchela'), ('41', 'Souk Ahras'), ('42', 'Tipaza'), ('43', 'Mila'),
-    ('44', 'Aïn Defla'), ('45', 'Naâma'), ('46', 'Aïn Témouchent'), ('47', 'Ghardaïa'),
-    ('48', 'Relizane'), ('49', 'Timimoun'), ('50', 'Bordj Badji Mokhtar'),
-    ('51', 'Ouled Djellal'), ('52', 'Béni Abbès'), ('53', 'In Salah'),
-    ('54', 'In Guezzam'), ('55', 'Touggourt'), ('56', 'Djanet'),
-    ('57', "El M'Ghair"), ('58', 'El Meniaa'),
+    ("01", "Adrar"),
+    ("02", "Chlef"),
+    ("03", "Laghouat"),
+    ("04", "Oum El Bouaghi"),
+    ("05", "Batna"),
+    ("06", "Béjaïa"),
+    ("07", "Biskra"),
+    ("08", "Béchar"),
+    ("09", "Blida"),
+    ("10", "Bouira"),
+    ("11", "Tamanrasset"),
+    ("12", "Tébessa"),
+    ("13", "Tlemcen"),
+    ("14", "Tiaret"),
+    ("15", "Tizi Ouzou"),
+    ("16", "Alger"),
+    ("17", "Djelfa"),
+    ("18", "Jijel"),
+    ("19", "Sétif"),
+    ("20", "Saïda"),
+    ("21", "Skikda"),
+    ("22", "Sidi Bel Abbès"),
+    ("23", "Annaba"),
+    ("24", "Guelma"),
+    ("25", "Constantine"),
+    ("26", "Médéa"),
+    ("27", "Mostaganem"),
+    ("28", "M'Sila"),
+    ("29", "Mascara"),
+    ("30", "Ouargla"),
+    ("31", "Oran"),
+    ("32", "El Bayadh"),
+    ("33", "Illizi"),
+    ("34", "Bordj Bou Arréridj"),
+    ("35", "Boumerdès"),
+    ("36", "El Tarf"),
+    ("37", "Tindouf"),
+    ("38", "Tissemsilt"),
+    ("39", "El Oued"),
+    ("40", "Khenchela"),
+    ("41", "Souk Ahras"),
+    ("42", "Tipaza"),
+    ("43", "Mila"),
+    ("44", "Aïn Defla"),
+    ("45", "Naâma"),
+    ("46", "Aïn Témouchent"),
+    ("47", "Ghardaïa"),
+    ("48", "Relizane"),
+    ("49", "Timimoun"),
+    ("50", "Bordj Badji Mokhtar"),
+    ("51", "Ouled Djellal"),
+    ("52", "Béni Abbès"),
+    ("53", "In Salah"),
+    ("54", "In Guezzam"),
+    ("55", "Touggourt"),
+    ("56", "Djanet"),
+    ("57", "El M'Ghair"),
+    ("58", "El Meniaa"),
 ]
 
 """
@@ -29,6 +71,7 @@ Models setup:
         └── OfferPlan (150Go / 9990 DA)
 """
 
+
 class OfferCategory(models.Model):
     """eg Offres Prépayées, Offres Internet, Roaming Europe"""
 
@@ -37,8 +80,8 @@ class OfferCategory(models.Model):
 
     # ordering purpose
     class Meta:
-        verbose_name_plural = 'Offer categories'
-        ordering = ['order']
+        verbose_name_plural = "Offer categories"
+        ordering = ["order"]
 
     # adding labels for admin panel
     def __str__(self):
@@ -48,11 +91,13 @@ class OfferCategory(models.Model):
 class Offer(models.Model):
     """eg Djezzy 3Ayla, DjezzyNet, Nouveau Modem 5G"""
 
-    category = models.ForeignKey(OfferCategory, on_delete=models.CASCADE, related_name='offers')
+    category = models.ForeignKey(
+        OfferCategory, on_delete=models.CASCADE, related_name="offers"
+    )
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=120, unique=True, blank=True)
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to='offers/', blank=True, null=True)
+    image = models.ImageField(upload_to="offers/", blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_new = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -71,7 +116,7 @@ class Offer(models.Model):
 
     # ordering purpose
     class Meta:
-        ordering = ['category', 'title']
+        ordering = ["category", "title"]
 
     # auto slugify if empty
     def save(self, *args, **kwargs):
@@ -87,7 +132,7 @@ class Offer(models.Model):
 class OfferPlan(models.Model):
     """Pricing tiers within an offer, eg 15Go/8500DA, 60Go/9000DA, 150Go/9990DA"""
 
-    offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name='plans')
+    offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name="plans")
     label = models.CharField(max_length=50, blank=True)  # "15Go", "60Go"
     data_amount_gb = models.PositiveIntegerField(null=True, blank=True)
     price_da = models.DecimalField(max_digits=10, decimal_places=2)
@@ -98,33 +143,41 @@ class OfferPlan(models.Model):
 
     # ordering purpose
     class Meta:
-        ordering = ['price_da']
+        ordering = ["price_da"]
 
     @property
     def features_pretty(self):
         """Pretty-printed JSON string of `features`, for editable textareas."""
         import json
+
         try:
             return json.dumps(self.features or {}, indent=2, ensure_ascii=False)
         except (TypeError, ValueError):
-            return '{}'
+            return "{}"
 
     # adding labels for admin panel
     def __str__(self):
         return f"{self.offer.title} — {self.label or self.data_amount_gb}Go — {self.price_da} DA"
 
+
 class OfferQuota(models.Model):
-    offer = models.ForeignKey(Offer,  on_delete=models.CASCADE,  related_name='wilaya_quotas')
+    offer = models.ForeignKey(
+        Offer, on_delete=models.CASCADE, related_name="wilaya_quotas"
+    )
     wilaya_code = models.CharField(max_length=2, choices=WILAYA_CHOICES)
-    total_quota = models.PositiveIntegerField(help_text="Total units available for this Wilaya")
-    allocated_quota = models.PositiveIntegerField(default=0,  help_text="Units currently assigned to stores/clients")
+    total_quota = models.PositiveIntegerField(
+        help_text="Total units available for this Wilaya"
+    )
+    allocated_quota = models.PositiveIntegerField(
+        default=0, help_text="Units currently assigned to stores/clients"
+    )
 
     class Meta:
         verbose_name = "Offer Wilaya Quota"
         verbose_name_plural = "Offer Wilaya Quotas"
-        unique_together = ('offer', 'wilaya_code')
+        unique_together = ("offer", "wilaya_code")
         indexes = [
-            models.Index(fields=['offer', 'wilaya_code']),
+            models.Index(fields=["offer", "wilaya_code"]),
         ]
 
     @property

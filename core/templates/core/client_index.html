@@ -1,52 +1,57 @@
-{% extends 'core/client_page_base.html' %}
+{% extends "core/client_page_base.html" %}
 {% block title %}Offers{% endblock %}
 {% block content %}
-<div class="container" style="max-width: 1200px;">
-
-    <!-- ============ CATEGORY FILTER ============ -->
-    {% if categories %}
-    <div class="chip-row mb-4">
-        <a href="{% url 'client_index_page' %}" class="chip {% if not selected_category %}active{% endif %}">All</a>
-        {% for category in categories %}
-        <a href="{% url 'client_index_page' %}?category={{ category.id }}"
-           class="chip {% if selected_category and selected_category.id == category.id %}active{% endif %}">
-            {{ category.name }}
-        </a>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- ============ OFFER GRID ============ -->
-    <div class="row g-4">
-        {% for offer in offers %}
-        <div class="col-12 col-md-6 col-lg-4">
-            <a href="{% url 'offer_detail_page' offer.slug %}" class="text-decoration-none">
-                <div class="card card-hover h-100 overflow-hidden">
-                    {% if offer.image %}
-                    <img src="{{ offer.image.url }}" class="card-img-top" alt="{{ offer.title }}">
-                    {% else %}
-                    <div class="d-flex align-items-center justify-content-center bg-black" style="height: 180px;">
-                        <i class="bi bi-tag" style="font-size: 2.5rem; color: var(--bs-secondary-color);"></i>
-                    </div>
-                    {% endif %}
-                    <div class="card-body">
-                        <h5 class="card-title" style="font-size: 1.05rem;">{{ offer.title }}</h5>
-                        <p class="card-text text-secondary small mb-2">{{ offer.description|truncatewords:20 }}</p>
-                        <span class="text-primary small fw-semibold">
-                            View plans <i class="bi bi-arrow-right"></i>
-                        </span>
+    <div class="container" style="max-width: 1200px;">
+        <!-- ============ CATEGORY FILTER ============ -->
+        {% if categories %}
+            <div class="chip-row mb-4">
+                <a href="{% url 'client_index_page' %}"
+                   class="chip {% if not selected_category %}active{% endif %}">All</a>
+                {% for category in categories %}
+                    <a href="{% url 'client_index_page' %}?category={{ category.id }}"
+                       class="chip {% if selected_category and selected_category.id == category.id %}active{% endif %}">
+                        {{ category.name }}
+                    </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <!-- ============ OFFER GRID ============ -->
+        <div class="row g-4">
+            {% for offer in offers %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <a href="{% url 'offer_detail_page' offer.slug %}"
+                       class="text-decoration-none">
+                        <div class="card card-hover h-100 overflow-hidden">
+                            {% if offer.image %}
+                                <img src="{{ offer.image.url }}"
+                                     class="card-img-top"
+                                     alt="{{ offer.title }}">
+                            {% else %}
+                                <div class="d-flex align-items-center justify-content-center bg-black"
+                                     style="height: 180px">
+                                    <i class="bi bi-tag"
+                                       style="font-size: 2.5rem;
+                                              color: var(--bs-secondary-color)"></i>
+                                </div>
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title" style="font-size: 1.05rem;">{{ offer.title }}</h5>
+                                <p class="card-text text-secondary small mb-2">{{ offer.description|truncatewords:20 }}</p>
+                                <span class="text-primary small fw-semibold">
+                                    View plans <i class="bi bi-arrow-right"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                        <p class="mb-0 mt-2">No offers found.</p>
                     </div>
                 </div>
-            </a>
+            {% endfor %}
         </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="empty-state">
-                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                <p class="mb-0 mt-2">No offers found.</p>
-            </div>
-        </div>
-        {% endfor %}
     </div>
-</div>
 {% endblock %}

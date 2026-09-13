@@ -14,6 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import RedirectView
@@ -22,12 +23,17 @@ from django.templatetags.static import static as static_url
 from django.conf import settings
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include("core.urls")),
-    path('account/', include("clients.urls")),
-    path('commercial/', include("interns.urls")),
-    path('notifications/', include('notifications.urls')),
-    path('favicon.ico/', RedirectView.as_view(url=static_url('shared/favicon_ico/favicon.ico'), permanent=True )),
+    path("admin/", admin.site.urls),
+    path("", include("core.urls")),
+    path("account/", include("clients.urls")),
+    path("commercial/", include("interns.urls")),
+    path("notifications/", include("notifications.urls")),
+    path(
+        "favicon.ico/",
+        RedirectView.as_view(
+            url=static_url("shared/favicon_ico/favicon.ico"), permanent=True
+        ),
+    ),
 ]
 
 if settings.DEBUG:
