@@ -1,8 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.deletion import PROTECT, SET_NULL
 from core.models import OfferPlan
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+
+from interns.models import Commercial
 
 WILAYA_CHOICES = [
     ("01", "Adrar"),
@@ -88,10 +91,12 @@ class Commune(models.Model):
     def __str__(self):
         return f"{self.name} ({self.wilaya_code})"
 
-
 class Store(models.Model):
     client = models.ForeignKey(
         Client, on_delete=models.CASCADE, related_name="locations"
+    )
+    commmercial = models.ForeignKey(
+        Commercial, on_delete=PROTECT, related_name="store", null=True
     )
     name = models.CharField(max_length=255)
     address_line1 = models.CharField(max_length=255)
@@ -127,6 +132,11 @@ class Store(models.Model):
     def __str__(self):
         return f"{self.name} ({self.client})"
 
+    def save(self, *args, **kwargs):
+        if self._state.adding and not self.commmercial_id:
+            from .services import get_least_loaded_commercial
+            self.commmercial = get_least_loaded_commercial()
+        super().save(*args, **kwargs)
 
 class StoreOfferTransaction(models.Model):
     store = models.ForeignKey(

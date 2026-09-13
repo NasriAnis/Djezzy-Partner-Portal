@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.db import transaction
+from django.core.exceptions import PermissionDenied
 
 from core.models import Offer, OfferPlan, OfferQuota, WILAYA_CHOICES
 from clients.models import Client, Store, StoreOfferTransaction, StoreStock
@@ -64,11 +65,17 @@ def commercials_login(request):
 
 @login_required(login_url="commercials_login")
 def commercials_dashboard_page(request):
+    commercial, _ = _get_commercial(request)
+
+    my_stores = Store.objects.filter(commmercial=commercial)
+
     context = {
         "offers_count": Offer.objects.count(),
-        "clients_count": Client.objects.count(),
-        "stores_count": Store.objects.count(),
-        "recent_stores": Store.objects.select_related("client__user").order_by(
+        "clients_count": Client.objects.filter(
+            locations__commmercial=commercial
+        ).distinct().count(),
+        "stores_count": my_stores.count(),
+        "recent_stores": my_stores.select_related("client__user").order_by(
             "-created_at"
         )[:5],
     }
@@ -251,13 +258,15 @@ def commercials_offer_edit_page(request, slug):
 
 @login_required(login_url="commercials_login")
 def commercials_clients_page(request):
+    commercial, can_edit = _get_commercial(request)
     view_filter = request.GET.get("view", "all")
     context = {"view_filter": view_filter}
 
     if view_filter == "pending_offers":
         pending_transactions = (
             StoreOfferTransaction.objects.filter(
-                status=StoreOfferTransaction.STATUS_PENDING
+                status=StoreOfferTransaction.STATUS_PENDING,
+                store__commmercial=commercial,
             )
             .select_related("store__client__user", "plan__offer")
             .order_by("-created_at")
@@ -266,12 +275,23 @@ def commercials_clients_page(request):
 
     else:
         clients = (
-            Client.objects.select_related("user")
+            Client.objects.filter(locations__commmercial=commercial)
+            .select_related("user")
             .prefetch_related("locations")
             .annotate(
+                my_locations_count=Count(
+                    "locations",
+                    filter=Q(locations__commmercial=commercial),
+                    distinct=True,
+                ),
                 inactive_locations_count=Count(
-                    "locations", filter=Q(locations__status=Store.STATUS_PENDING)
-                )
+                    "locations",
+                    filter=Q(
+                        locations__status=Store.STATUS_PENDING,
+                        locations__commmercial=commercial,
+                    ),
+                    distinct=True,
+                ),
             )
         )
         if view_filter == "pending":
@@ -284,8 +304,11 @@ def commercials_clients_page(request):
 
 @login_required(login_url="commercials_login")
 def commercials_store_detail_page(request, store_id):
+    commercial, _ = _get_commercial(request)
     store = get_object_or_404(
-        Store.objects.select_related("client__user", "comune"), id=store_id
+        Store.objects.select_related("client__user", "comune"),
+        id=store_id,
+        commmercial=commercial,
     )
     return render(
         request, "interns/commercials_store_detail_page.html", {"store": store}
@@ -294,8 +317,9 @@ def commercials_store_detail_page(request, store_id):
 
 @login_required(login_url="commercials_login")
 def commercials_client_detail_page(request, client_id):
+    commercial, _ = _get_commercial(request)
     client = get_object_or_404(Client, id=client_id)
-    stores = client.locations.all()
+    stores = client.locations.filter(commmercial=commercial)
     transactions = (
         StoreOfferTransaction.objects.filter(store__in=stores)
         .select_related("store", "plan__offer")
@@ -319,7 +343,7 @@ def commercials_client_detail_page(request, client_id):
 @login_required(login_url="commercials_login")
 @require_POST
 def commercials_approve_transaction(request, transaction_id):
-    _, can_edit = _get_commercial(request)
+    commercial, can_edit = _get_commercial(request)
     if not can_edit:
         messages.error(request, "You have read-only access.")
         return redirect("commercials_clients_page")
@@ -327,7 +351,9 @@ def commercials_approve_transaction(request, transaction_id):
     with transaction.atomic():
         # Lock transaction row during approval
         trans = get_object_or_404(
-            StoreOfferTransaction.objects.select_for_update(), id=transaction_id
+            StoreOfferTransaction.objects.select_for_update(),
+            id=transaction_id,
+            store__commmercial=commercial,
         )
 
         if trans.status != StoreOfferTransaction.STATUS_APPROVED:
@@ -360,7 +386,7 @@ def commercials_approve_transaction(request, transaction_id):
 @login_required(login_url="commercials_login")
 @require_POST
 def commercials_deny_transaction(request, transaction_id):
-    _, can_edit = _get_commercial(request)
+    commercial, can_edit = _get_commercial(request)
     if not can_edit:
         messages.error(request, "You have read-only access.")
         return redirect("commercials_clients_page")
@@ -377,7 +403,9 @@ def commercials_deny_transaction(request, transaction_id):
     with transaction.atomic():
         # Lock transaction row during approval
         trans = get_object_or_404(
-            StoreOfferTransaction.objects.select_for_update(), id=transaction_id
+            StoreOfferTransaction.objects.select_for_update(),
+            id=transaction_id,
+            store__commmercial=commercial,
         )
 
         if trans.status != StoreOfferTransaction.STATUS_BLOCKED:
@@ -400,12 +428,12 @@ def commercials_deny_transaction(request, transaction_id):
 @login_required(login_url="commercials_login")
 @require_POST
 def commercials_approve_store(request, store_id):
-    _, can_edit = _get_commercial(request)
+    commercial, can_edit = _get_commercial(request)
     if not can_edit:
         messages.error(request, "You have read-only access.")
         return redirect("commercials_store_detail_page", store_id=store_id)
 
-    store = get_object_or_404(Store, id=store_id)
+    store = get_object_or_404(Store, id=store_id, commmercial=commercial)
 
     if store.status != Store.STATUS_APPROVED:
         store.status = Store.STATUS_APPROVED
@@ -421,12 +449,12 @@ def commercials_approve_store(request, store_id):
 @login_required(login_url="commercials_login")
 @require_POST
 def commercials_block_store(request, store_id):
-    _, can_edit = _get_commercial(request)
+    commercial, can_edit = _get_commercial(request)
     if not can_edit:
         messages.error(request, "You have read-only access.")
         return redirect("commercials_store_detail_page", store_id=store_id)
 
-    store = get_object_or_404(Store, id=store_id)
+    store = get_object_or_404(Store, id=store_id, commmercial=commercial)
     fallback_url = request.META.get("HTTP_REFERER") or reverse(
         "commercials_clients_page"
     )

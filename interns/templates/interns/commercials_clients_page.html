@@ -122,7 +122,7 @@
                             <tr>
                                 <td>{{ client.user.get_full_name|default:client.user.username }}</td>
                                 <td>{{ client.user.email }}</td>
-                                <td>{{ client.locations.count }}</td>
+                                <td>{{ client.my_locations_count }}</td>
                                 <td>
                                     {% if client.inactive_locations_count > 0 %}
                                         <span class="badge bg-warning text-dark">{{ client.inactive_locations_count }} pending</span>
