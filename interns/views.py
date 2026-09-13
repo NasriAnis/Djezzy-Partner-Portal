@@ -275,7 +275,7 @@ def commercials_client_detail_page(request, client_id):
 @login_required(login_url='commercials_login')
 @require_POST
 def commercials_approve_transaction(request, transaction_id):
-    commercial_profile, can_edit = _get_commercial(request)
+    _, can_edit = _get_commercial(request)
     if not can_edit:
         messages.error(request, "You have read-only access.")
         return redirect('commercials_clients_page')
@@ -314,7 +314,7 @@ def commercials_approve_transaction(request, transaction_id):
 @login_required(login_url='commercials_login')
 @require_POST
 def commercials_deny_transaction(request, transaction_id):
-    commercial_profile, can_edit = _get_commercial(request)
+    _, can_edit = _get_commercial(request)
     if not can_edit:
         messages.error(request, "You have read-only access.")
         return redirect('commercials_clients_page')
@@ -352,7 +352,7 @@ def commercials_deny_transaction(request, transaction_id):
 @login_required(login_url='commercials_login')
 @require_POST
 def commercials_approve_store(request, store_id):
-    commercial_profile, can_edit = _get_commercial(request)
+    _, can_edit = _get_commercial(request)
     if not can_edit:
         messages.error(request, "You have read-only access.")
         return redirect('commercials_store_detail_page', store_id=store_id)
