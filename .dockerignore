@@ -1,0 +1,6 @@
+.gitignore
+db.sqlite3
+migrations/
+__pyache__/
+.venv/
+Notes/
