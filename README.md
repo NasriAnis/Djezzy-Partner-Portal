@@ -3,9 +3,9 @@
 A Django-based platform for telecom operators (e.g. Djezzy) to manage offers sold through outside sellers. Lets operators set purchase thresholds (seuils) per wilaya and per boutique, track consumption against those limits, and control distribution across their reseller network.
 
 ## Docs
-Documentation about the site is available in [`docs`](./docs), which contains:
-- [`internals`](./docs/internals): internal architecture, design decisions, and implementation notes for contributors/maintainers.
-- [`user`](./docs/user): user-facing guides and usage documentation.
+Documentation about the site is available in [`docs`](./Docs), which contains:
+- [`internals`](./Docs/internals): internal architecture, design decisions, and implementation notes for contributors/maintainers.
+- [`user`](./Docs/user): user-facing guides and usage documentation.
 
 ## Project Structure
 
