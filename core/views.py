@@ -60,9 +60,6 @@ def offer_detail_page(request, offer_slug):
             )
             return redirect("offer_detail_page", offer_slug=offer.slug)
 
-        # Belt-and-braces: re-check status even though selected_store was
-        # already pulled from the accepted-only queryset above, in case
-        # its status changed between page load and form submit.
         if selected_store.status != Store.STATUS_APPROVED:
             messages.error(
                 request, "This store isn't approved yet — purchases aren't allowed."
@@ -71,6 +68,7 @@ def offer_detail_page(request, offer_slug):
 
         plan_id = request.POST.get("plan_id")
         plan = get_object_or_404(OfferPlan, id=plan_id, offer=offer)
+        intent = request.POST.get("intent")  # "draft" or "buy_now"
 
         try:
             quantity = int(request.POST.get("quantity", 1))
@@ -80,44 +78,80 @@ def offer_detail_page(request, offer_slug):
             messages.error(request, "Please enter a valid quantity of at least 1.")
             return redirect("offer_detail_page", offer_slug=offer.slug)
 
-        with transaction.atomic():
-            formatted_wilaya_code = str(selected_store.wilaya).zfill(2)
+        formatted_wilaya_code = str(selected_store.wilaya).zfill(2)
 
-            # Lock the quota row to prevent race conditions during checkout
-            current_quota = (
-                OfferQuota.objects.select_for_update()
-                .filter(offer=offer, wilaya_code=formatted_wilaya_code)
-                .first()
-            )
+        if intent == "draft":
+            # Cart-style: no quota deducted yet, just a rough sanity check
+            already_in_cart = StoreOfferTransaction.objects.filter(
+                store=selected_store,
+                plan=plan,
+                status=StoreOfferTransaction.STATUS_DRAFT,
+            ).first()
+            existing_qty = already_in_cart.quantity_bought if already_in_cart else 0
 
-            if current_quota and current_quota.is_available(quantity):
-                # 1. Register or update transaction under the selected store
+            current_quota = OfferQuota.objects.filter(
+                offer=offer, wilaya_code=formatted_wilaya_code
+            ).first()
+
+            if not current_quota or not current_quota.is_available(existing_qty + quantity):
+                available = current_quota.remaining_quota if current_quota else 0
+                messages.error(
+                    request,
+                    f"Can't add {quantity} — only {available} remaining for your Wilaya.",
+                )
+                return redirect("offer_detail_page", offer_slug=offer.slug)
+
+            with transaction.atomic():
                 store_tx, created = StoreOfferTransaction.objects.get_or_create(
                     store=selected_store,
                     plan=plan,
-                    status=StoreOfferTransaction.STATUS_PENDING,
+                    status=StoreOfferTransaction.STATUS_DRAFT,
                     defaults={"quantity_bought": quantity},
                 )
                 if not created:
                     store_tx.quantity_bought += quantity
                     store_tx.save()
 
-                # 2. Increase allocated quota in core DB (decreases remaining_quota)
-                current_quota.allocated_quota += quantity
-                current_quota.save()
+            messages.success(
+                request,
+                f"Added {quantity}x '{plan.label}' to your draft order for {selected_store.name}.",
+            )
+            return redirect("offer_detail_page", offer_slug=offer.slug)
 
-                messages.success(
-                    request,
-                    f"Successfully purchased {quantity}x '{plan.label}' for {selected_store.name}!",
-                )
-                return redirect("offer_detail_page", offer_slug=offer.slug)
-            else:
-                available = current_quota.remaining_quota if current_quota else 0
-                messages.error(
-                    request,
-                    f"Order failed. Requested {quantity} units, but only {available} remaining for your Wilaya.",
+        else:
+            # Direct buy: deduct quota immediately, goes straight to pending
+            with transaction.atomic():
+                current_quota = (
+                    OfferQuota.objects.select_for_update()
+                    .filter(offer=offer, wilaya_code=formatted_wilaya_code)
+                    .first()
                 )
 
+                if current_quota and current_quota.is_available(quantity):
+                    store_tx, created = StoreOfferTransaction.objects.get_or_create(
+                        store=selected_store,
+                        plan=plan,
+                        status=StoreOfferTransaction.STATUS_PENDING,
+                        defaults={"quantity_bought": quantity},
+                    )
+                    if not created:
+                        store_tx.quantity_bought += quantity
+                        store_tx.save()
+
+                    current_quota.allocated_quota += quantity
+                    current_quota.save()
+
+                    messages.success(
+                        request,
+                        f"Successfully purchased {quantity}x '{plan.label}' for {selected_store.name}!",
+                    )
+                    return redirect("offer_detail_page", offer_slug=offer.slug)
+                else:
+                    available = current_quota.remaining_quota if current_quota else 0
+                    messages.error(
+                        request,
+                        f"Order failed. Requested {quantity} units, but only {available} remaining for your Wilaya.",
+                    )
     context = {
         "offer": offer,
         "offer_plans": offer_plans,
