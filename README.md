@@ -4,8 +4,8 @@ A Django-based platform for telecom operators (e.g. Djezzy) to manage offers sol
 
 ## Docs
 Documentation about the site is available in [`docs`](./Docs), which contains:
-- [`internals`](./Docs/internals): internal architecture, design decisions, and implementation notes for contributors/maintainers.
-- [`user`](./Docs/user): user-facing guides and usage documentation.
+- [`internals`](./Docs/Internals.md): internal architecture, design decisions, and implementation notes for contributors/maintainers.
+- [`user`](./Docs/User.md): user-facing guides and usage documentation.
 
 ## Project Structure
 
