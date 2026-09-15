@@ -7,6 +7,8 @@ services:
       - sqlite_data:/app/data
       - media_data:/app/media
       - static_data:/app/staticfiles
+    environment:
+      - SQLITE_DB_DIR=data
     ports:
       - "8000:8000"
 
