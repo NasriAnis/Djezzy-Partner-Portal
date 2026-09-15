@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Access Denied</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .box {
+      text-align: center;
+      background: #fff;
+      padding: 40px 50px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    h1 {
+      font-size: 48px;
+      margin: 0 0 10px;
+      color: #c0392b;
+    }
+    p {
+      margin: 0 0 20px;
+      font-size: 16px;
+    }
+    a {
+      color: #2980b9;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>403</h1>
+    {% if request.user.is_authenticated and request.user.client_profile %}
+      <p>This page is for commercial accounts only.</p>
+      <a href="{% url 'client_index_page' %}">Exit</a>
+    {% else %}
+      <p>You don't have permission to view this page.</p>
+    {% endif %}
+  </div>
+</body>
+</html>

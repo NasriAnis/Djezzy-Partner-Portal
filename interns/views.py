@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.db import transaction
 from django.core.exceptions import PermissionDenied
+from functools import wraps
 
 from core.models import Offer, OfferPlan, OfferQuota, WILAYA_CHOICES
 from clients.models import Client, Store, StoreOfferTransaction, StoreStock
@@ -18,6 +19,21 @@ from interns.forms import (
     OfferCategory,
 )
 from notifications.utils import notify
+
+########### Decorators ###########
+
+def commercial_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect("commercials_login")
+
+        if not hasattr(request.user, "commercial_profile"):
+            # logged in but not a commercial then block
+            return render(request, "shared/403.html", status=403)
+
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
 
 ########### Utils ###########
 
@@ -64,6 +80,7 @@ def commercials_login(request):
 
 
 @login_required(login_url="commercials_login")
+@commercial_required
 def commercials_dashboard_page(request):
     commercial, _ = _get_commercial(request)
 
@@ -83,6 +100,7 @@ def commercials_dashboard_page(request):
 
 
 @login_required(login_url="commercials_login")
+@commercial_required
 def commercials_offers_page(request):
     _, can_edit = _get_commercial(request)
 
@@ -154,6 +172,7 @@ def commercials_offers_page(request):
 
 
 @login_required(login_url="commercials_login")
+@commercial_required
 def commercials_offer_edit_page(request, slug):
     offer = get_object_or_404(Offer, slug=slug)
     _, can_edit = _get_commercial(request)
@@ -257,6 +276,7 @@ def commercials_offer_edit_page(request, slug):
 
 
 @login_required(login_url="commercials_login")
+@commercial_required
 def commercials_clients_page(request):
     commercial, can_edit = _get_commercial(request)
     view_filter = request.GET.get("view", "all")
@@ -303,6 +323,7 @@ def commercials_clients_page(request):
 
 
 @login_required(login_url="commercials_login")
+@commercial_required
 def commercials_store_detail_page(request, store_id):
     commercial, _ = _get_commercial(request)
     store = get_object_or_404(
@@ -316,6 +337,7 @@ def commercials_store_detail_page(request, store_id):
 
 
 @login_required(login_url="commercials_login")
+@commercial_required
 def commercials_client_detail_page(request, client_id):
     commercial, _ = _get_commercial(request)
     client = get_object_or_404(Client, id=client_id)
@@ -341,6 +363,7 @@ def commercials_client_detail_page(request, client_id):
 
 
 @login_required(login_url="commercials_login")
+@commercial_required
 @require_POST
 def commercials_approve_transaction(request, transaction_id):
     commercial, can_edit = _get_commercial(request)
@@ -384,6 +407,7 @@ def commercials_approve_transaction(request, transaction_id):
 
 
 @login_required(login_url="commercials_login")
+@commercial_required
 @require_POST
 def commercials_deny_transaction(request, transaction_id):
     commercial, can_edit = _get_commercial(request)
@@ -426,6 +450,7 @@ def commercials_deny_transaction(request, transaction_id):
 
 
 @login_required(login_url="commercials_login")
+@commercial_required
 @require_POST
 def commercials_approve_store(request, store_id):
     commercial, can_edit = _get_commercial(request)
@@ -447,6 +472,7 @@ def commercials_approve_store(request, store_id):
 
 
 @login_required(login_url="commercials_login")
+@commercial_required
 @require_POST
 def commercials_block_store(request, store_id):
     commercial, can_edit = _get_commercial(request)
