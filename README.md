@@ -2,6 +2,11 @@
 
 A Django-based platform for telecom operators (e.g. Djezzy) to manage offers sold through outside sellers. Lets operators set purchase thresholds (seuils) per wilaya and per boutique, track consumption against those limits, and control distribution across their reseller network.
 
+## Docs
+Documentation about the site is available in [`docs`](./docs), which contains:
+- [`internals`](./docs/internals): internal architecture, design decisions, and implementation notes for contributors/maintainers.
+- [`user`](./docs/user): user-facing guides and usage documentation.
+
 ## Project Structure
 
 ```
@@ -43,7 +48,7 @@ A Django-based platform for telecom operators (e.g. Djezzy) to manage offers sol
 └── manage.py
 ```
 
-## Setup
+## Dev Setup
 
 ### 1. Clone and enter the project
 
@@ -100,7 +105,7 @@ python manage.py runserver
 
 The site will be available at `http://127.0.0.1:8000/`.
 
-## Run using docker
+## Docker for deployment
 ```
 Start fresh / after code change           docker compose up --build -d
 Stop (keep data)                          docker compose down
