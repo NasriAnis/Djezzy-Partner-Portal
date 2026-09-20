@@ -82,6 +82,13 @@ DEBUG=True
 ### 5. Apply migrations
 
 ```bash
+python manage.py makemigrations core
+python manage.py makemigrations clients
+python manage.py makemigrations interns
+python manage.py makemigrations notifications
+python manage.py migrate core
+python manage.py migrate clients
+python manage.py migrate interns
 python manage.py migrate
 ```
 
@@ -106,13 +113,30 @@ python manage.py runserver
 The site will be available at `http://127.0.0.1:8000/`.
 
 ## Docker for deployment
+Create a `.env` file in the project root:
+```env
+SECRET_KEY=your-secret-key-here
+DEBUG=True
 ```
-Start fresh / after code change           docker compose up --build -d
-Stop (keep data)                          docker compose down
-Wipe everything                           docker compose down -v
-View logs                                 docker compose logs -f web
-New model field → migration               docker compose exec web python manage.py makemigrations
-Django shell                              docker compose exec web python manage.py shell
+
+Start the docker container:
+```
+docker compose up --build -d
+```
+
+Stop the container:
+```
+docker compose down
+docker compose down -v # whipe everything
+```
+View logs:
+```
+docker compose logs -f web
+```
+Apply migration or connect to the shell (optional):
+```
+docker compose exec web python manage.py makemigrations
+docker compose exec web python manage.py shell
 ```
 
 ## Key URL Routes
