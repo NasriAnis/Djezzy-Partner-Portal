@@ -29,6 +29,17 @@ def commercials_clients_page(request):
         )
         context["pending_transactions"] = pending_transactions
 
+    elif view_filter == "waitlist":
+        waitlisted_transactions = (
+            StoreOfferTransaction.objects.filter(
+                status=StoreOfferTransaction.STATUS_WAITLISTED,
+                store__commmercial=commercial,
+            )
+            .select_related("store__client__user", "plan__offer")
+            .order_by("created_at")  # oldest first matches FIFO fulfillment order
+        )
+        context["waitlisted_transactions"] = waitlisted_transactions
+
     else:
         clients = (
             Client.objects.filter(locations__commmercial=commercial)
@@ -56,7 +67,6 @@ def commercials_clients_page(request):
         context["clients"] = clients.distinct().order_by("user__date_joined")
 
     return render(request, "interns/commercials_clients_page.html", context)
-
 
 @login_required(login_url="commercials_login")
 @commercial_required

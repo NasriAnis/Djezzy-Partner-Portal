@@ -160,7 +160,6 @@ class OfferPlan(models.Model):
     def __str__(self):
         return f"{self.offer.title} — {self.label or self.data_amount_gb}Go — {self.price_da} DA"
 
-
 class OfferQuota(models.Model):
     offer = models.ForeignKey(
         Offer, on_delete=models.CASCADE, related_name="wilaya_quotas"
@@ -211,6 +210,7 @@ class OfferQuota(models.Model):
                 plan__offer=self.offer,
             )
             .exclude(status=StoreOfferTransaction.STATUS_BLOCKED)
+            .exclude(status=StoreOfferTransaction.STATUS_WAITLISTED)
             .aggregate(total=Sum("quantity_bought"))["total"]
         )
         return total or 0
@@ -224,6 +224,58 @@ class OfferQuota(models.Model):
             return self.remaining_quota
         used = self.quantity_used_by(store)
         return max(0, min(self.max_quantity_per_client - used, self.remaining_quota))
+
+    def process_waitlist(self):
+        """
+        Fulfil waitlisted transactions for this quota, oldest first (FIFO).
+        Each entry is fulfilled fully if enough quota is available for it and
+        the requesting store hasn't hit its own per-client cap; otherwise it's
+        fulfilled partially (a new PENDING transaction is split off for the
+        available amount, and the original entry stays WAITLISTED for the rest).
+        Call this any time total_quota or allocated_quota might have freed up
+        room — e.g. right after a commercial increases total_quota.
+        """
+        from clients.models import StoreOfferTransaction
+
+        if self.remaining_quota <= 0:
+            return
+
+        waitlisted = (
+            StoreOfferTransaction.objects.select_for_update()
+            .filter(
+                plan__offer=self.offer,
+                status=StoreOfferTransaction.STATUS_WAITLISTED,
+                store__wilaya=self.wilaya_code,
+            )
+            .order_by("created_at")
+        )
+
+        for tx in waitlisted:
+            if self.remaining_quota <= 0:
+                break
+
+            available = min(self.remaining_quota, self.remaining_for_store(tx.store))
+            if available <= 0:
+                # This store is at its own cap for now — skip it, keep checking
+                # later entries so one blocked store doesn't stall the queue.
+                continue
+
+            if tx.quantity_bought <= available:
+                tx.status = StoreOfferTransaction.STATUS_PENDING
+                tx.save(update_fields=["status"])
+                self.allocated_quota += tx.quantity_bought
+            else:
+                StoreOfferTransaction.objects.create(
+                    store=tx.store,
+                    plan=tx.plan,
+                    quantity_bought=available,
+                    status=StoreOfferTransaction.STATUS_PENDING,
+                )
+                tx.quantity_bought -= available
+                tx.save(update_fields=["quantity_bought"])
+                self.allocated_quota += available
+
+            self.save(update_fields=["allocated_quota"])
 
     def __str__(self):
         return f"{self.offer.title} - {self.get_wilaya_code_display()}: {self.remaining_quota}/{self.total_quota} left"

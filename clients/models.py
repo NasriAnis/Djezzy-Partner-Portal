@@ -154,12 +154,14 @@ class StoreOfferTransaction(models.Model):
     STATUS_APPROVED = "approved"
     STATUS_BLOCKED = "blocked"
     STATUS_DRAFT = "draft"
+    STATUS_WAITLISTED = "waitlisted"
 
     STATUS_CHOICES = [
         (STATUS_PENDING, "Pending"),
         (STATUS_APPROVED, "Approved"),
         (STATUS_BLOCKED, "Blocked"),
         (STATUS_DRAFT, "draft"),
+        (STATUS_WAITLISTED, "En attente de réapprovisionnement"),
     ]
 
     status = models.CharField(

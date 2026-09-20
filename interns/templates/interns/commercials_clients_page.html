@@ -15,6 +15,12 @@
             <a class="nav-link {% if view_filter == 'pending_offers' %}active{% endif %}"
                href="{% url 'commercials_clients_page' %}?view=pending_offers">Pending Offers</a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link {% if view_filter == 'waitlist' %}active{% endif %}"
+               href="{% url 'commercials_clients_page' %}?view=waitlist">
+                <i class="bi bi-hourglass-split me-1"></i>En attente de réapprovisionnement
+            </a>
+        </li>
     </ul>
     {% if view_filter == "pending_offers" %}
         <div class="card">
@@ -98,6 +104,46 @@
                         {% empty %}
                             <tr>
                                 <td colspan="7" class="text-secondary">No pending offers.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% elif view_filter == "waitlist" %}
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Store</th>
+                            <th>Offer / Plan</th>
+                            <th>Quantity Wanted</th>
+                            <th>Waiting Since</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in waitlisted_transactions %}
+                            <tr>
+                                <td>{{ t.store.client.user.get_full_name|default:t.store.client.user.username }}</td>
+                                <td>{{ t.store.name }}</td>
+                                <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
+                                <td>{{ t.quantity_bought }}</td>
+                                <td>{{ t.created_at|date:"d M Y" }}</td>
+                                <td>
+                                    <a href="{% url 'commercials_store_detail_page' t.store.id %}"
+                                       class="btn btn-sm btn-outline-light">Store Info</a>
+                                    <a href="{% url 'commercials_client_detail_page' t.store.client.id %}"
+                                       class="btn btn-sm btn-outline-light">Client Info</a>
+                                    <a href="{% url 'commercials_offer_edit_page' t.plan.offer.slug %}"
+                                       class="btn btn-sm btn-outline-warning">Manage Quota</a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-secondary">No requests waiting on quota.</td>
                             </tr>
                         {% endfor %}
                     </tbody>

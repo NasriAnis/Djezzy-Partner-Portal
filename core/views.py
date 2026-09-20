@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Sum
 
 from .models import Offer, OfferPlan, OfferQuota, OfferCategory
 from clients.models import Store, StoreOfferTransaction
@@ -68,7 +69,7 @@ def offer_detail_page(request, offer_slug):
 
         plan_id = request.POST.get("plan_id")
         plan = get_object_or_404(OfferPlan, id=plan_id, offer=offer)
-        intent = request.POST.get("intent")  # "draft" or "buy_now"
+        intent = request.POST.get("intent")  # "draft", "buy_now" or "waitlist"
 
         try:
             quantity = int(request.POST.get("quantity", 1))
@@ -129,6 +130,33 @@ def offer_detail_page(request, offer_slug):
             )
             return redirect("offer_detail_page", offer_slug=offer.slug)
 
+        elif intent == "waitlist":
+            # No quota deducted — this just queues the request, FIFO, to be
+            # auto-fulfilled by OfferQuota.process_waitlist() once restocked.
+            with transaction.atomic():
+                existing_waitlist = StoreOfferTransaction.objects.filter(
+                    store=selected_store,
+                    plan=plan,
+                    status=StoreOfferTransaction.STATUS_WAITLISTED,
+                ).first()
+                if existing_waitlist:
+                    existing_waitlist.quantity_bought += quantity
+                    existing_waitlist.save(update_fields=["quantity_bought"])
+                else:
+                    StoreOfferTransaction.objects.create(
+                        store=selected_store,
+                        plan=plan,
+                        quantity_bought=quantity,
+                        status=StoreOfferTransaction.STATUS_WAITLISTED,
+                    )
+
+            messages.success(
+                request,
+                f"You're queued for {quantity}x '{plan.label}' — "
+                f"{selected_store.name} will get it automatically once quota is replenished.",
+            )
+            return redirect("offer_detail_page", offer_slug=offer.slug)
+
         else:
             # Direct buy: deduct quota immediately, goes straight to pending
             with transaction.atomic():
@@ -177,14 +205,27 @@ def offer_detail_page(request, offer_slug):
                             f"Order failed. Your store can request at most "
                             f"{current_quota.max_quantity_per_client} units "
                             f"({current_quota.percentage_by_client}% of quota) for this offer. "
-                            f"{store_room_left} still available to you.",
+                            f"{store_room_left} still available to you. "
+                            f"You can join the waitlist instead.",
                         )
                     else:
                         available = current_quota.remaining_quota if current_quota else 0
                         messages.error(
                             request,
-                            f"Order failed. Requested {quantity} units, but only {available} remaining for your Wilaya.",
+                            f"Order failed. Requested {quantity} units, but only {available} remaining for your Wilaya. "
+                            f"You can join the waitlist instead.",
                         )
+
+    store_waitlist_total = None
+    if selected_store:
+        store_waitlist_total = (
+            StoreOfferTransaction.objects.filter(
+                store=selected_store,
+                plan__offer=offer,
+                status=StoreOfferTransaction.STATUS_WAITLISTED,
+            ).aggregate(total=Sum("quantity_bought"))["total"]
+            or 0
+        )
 
     context = {
         "offer": offer,
@@ -196,5 +237,6 @@ def offer_detail_page(request, offer_slug):
             quota_info.remaining_for_store(selected_store)
             if quota_info and selected_store else None
         ),
+        "store_waitlist_total": store_waitlist_total,
     }
     return render(request, "core/offer_details_page.html", context)

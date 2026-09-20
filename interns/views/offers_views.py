@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.db import transaction
 
 from core.models import Offer, OfferPlan, OfferQuota
 from interns.forms import (
@@ -161,7 +162,10 @@ def commercials_offer_edit_page(request, slug):
             )
             quota_form = OfferQuotaForm(request.POST, instance=quota)
             if quota_form.is_valid():
-                quota_form.save()
+                with transaction.atomic():
+                    quota_form.save()
+                    quota.refresh_from_db()
+                    quota.process_waitlist()
                 messages.success(request, "Quota updated.")
             else:
                 messages.error(request, "Could not update quota — check the form.")
