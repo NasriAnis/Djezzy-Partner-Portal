@@ -56,4 +56,9 @@ urlpatterns = [
         views.commercials_deny_transaction,
         name="commercials_deny_transaction",
     ),
+    path(
+           "transactions/<int:transaction_id>/fulfill-waitlist/",
+           views.commercials_fulfill_waitlist_transaction,
+           name="commercials_fulfill_waitlist_transaction",
+       ),
 ]

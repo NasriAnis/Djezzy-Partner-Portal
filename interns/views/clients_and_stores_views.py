@@ -10,6 +10,7 @@ from clients.models import Client, Store, StoreOfferTransaction, StoreStock
 from notifications.utils import notify
 
 from .utils_views import commercial_required, get_commercial_info
+from core.models import OfferQuota
 
 @login_required(login_url="commercials_login")
 @commercial_required
@@ -243,5 +244,84 @@ def commercials_block_store(request, store_id):
         notify(
             store.client, f"Your store {store.name} has been blocked: {reason}", store
         )
+
+@login_required(login_url="commercials_login")
+@commercial_required
+@require_POST
+def commercials_fulfill_waitlist_transaction(request, transaction_id):
+    commercial, can_edit, commercial_type = get_commercial_info(request)
+    if not can_edit and commercial_type != "MC":
+        messages.error(request, "You have read-only access.")
+        return redirect("commercials_clients_page")
+
+    fallback_url = request.META.get("HTTP_REFERER") or reverse(
+        "commercials_clients_page"
+    )
+
+    with transaction.atomic():
+        tx = get_object_or_404(
+            StoreOfferTransaction.objects.select_for_update(),
+            id=transaction_id,
+            store__commmercial=commercial,
+            status=StoreOfferTransaction.STATUS_WAITLISTED,
+        )
+
+        formatted_wilaya_code = str(tx.store.wilaya).zfill(2)
+        quota = (
+            OfferQuota.objects.select_for_update()
+            .filter(offer=tx.plan.offer, wilaya_code=formatted_wilaya_code)
+            .first()
+        )
+
+        available = quota.remaining_for_store(tx.store) if quota else 0
+
+        if available <= 0:
+            messages.error(
+                request,
+                f"No quota available yet for {tx.store.name} — "
+                f"{tx.quantity_bought} units still waiting.",
+            )
+            return redirect(fallback_url)
+
+        if tx.quantity_bought <= available:
+            tx.status = StoreOfferTransaction.STATUS_PENDING
+            tx.save(update_fields=["status"])
+            quota.allocated_quota += tx.quantity_bought
+            quota.save(update_fields=["allocated_quota"])
+
+            messages.success(
+                request,
+                f"Moved {tx.quantity_bought}x '{tx.plan.label}' for {tx.store.name} "
+                f"to Pending Offers — approve it there to finalize.",
+            )
+            notify(
+                tx.store.client,
+                f"Your waitlisted request for {tx.quantity_bought}x '{tx.plan.label}' "
+                f"is now pending approval!",
+                tx.store,
+            )
+        else:
+            StoreOfferTransaction.objects.create(
+                store=tx.store,
+                plan=tx.plan,
+                quantity_bought=available,
+                status=StoreOfferTransaction.STATUS_PENDING,
+            )
+            tx.quantity_bought -= available
+            tx.save(update_fields=["quantity_bought"])
+            quota.allocated_quota += available
+            quota.save(update_fields=["allocated_quota"])
+
+            messages.success(
+                request,
+                f"Partially fulfilled {available}x '{tx.plan.label}' for {tx.store.name} "
+                f"({tx.quantity_bought} units still waiting).",
+            )
+            notify(
+                tx.store.client,
+                f"{available}x '{tx.plan.label}' from your waitlisted request "
+                f"is now pending approval! ({tx.quantity_bought} still waiting)",
+                tx.store,
+            )
 
     return redirect(fallback_url)
