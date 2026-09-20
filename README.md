@@ -118,12 +118,14 @@ Create a `.env` file in the project root:
 SECRET_KEY=your-secret-key-here
 DEBUG=True
 ```
-
 Start the docker container:
 ```
 docker compose up --build -d
 ```
-
+Create superuser:
+```
+docker compose exec web python manage.py createsuperuser
+```
 Stop the container:
 ```
 docker compose down
