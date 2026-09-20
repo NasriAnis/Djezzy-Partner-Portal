@@ -4,6 +4,7 @@ from functools import wraps
 
 ########### Decorators ###########
 
+
 def commercial_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -15,17 +16,17 @@ def commercial_required(view_func):
             return render(request, "shared/403.html", status=403)
 
         return view_func(request, *args, **kwargs)
+
     return _wrapped_view
 
+
 ########### Utils ###########
+
 
 def get_commercial_info(request):
     """Helper: returns (commercial, can_edit)."""
     commercial = getattr(request.user, "commercial_profile", None)
-    can_edit = (
-        bool(commercial)
-        and commercial.modifications_rights
-    )
+    can_edit = bool(commercial) and commercial.modifications_rights
     if commercial:
         commercial_type = commercial.access_rights
     else:

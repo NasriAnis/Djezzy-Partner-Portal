@@ -11,6 +11,7 @@ from ..models import Store, StoreOfferTransaction, StoreStock, OfferSale
 
 ########## Pages ##########
 
+
 @login_required(login_url="client_login")
 def client_offer_manage_page(request):
     client = request.user.client_profile
@@ -89,10 +90,13 @@ def client_offer_manage_page(request):
         },
     )
 
+
 @login_required(login_url="client_login")
 def client_offer_draft_and_stock_page(request):
     client = request.user.client_profile
-    stores = Store.objects.filter(client=client, status=Store.STATUS_APPROVED).order_by("name")
+    stores = Store.objects.filter(client=client, status=Store.STATUS_APPROVED).order_by(
+        "name"
+    )
 
     if not stores.exists():
         messages.info(request, "You don't have any store yet. Add one first.")
@@ -127,7 +131,11 @@ def client_offer_draft_and_stock_page(request):
         formatted_wilaya_code = str(store.wilaya).zfill(2)
 
         with transaction.atomic():
-            quota = (OfferQuota.objects.select_for_update().filter(offer=tx.plan.offer, wilaya_code=formatted_wilaya_code).first())
+            quota = (
+                OfferQuota.objects.select_for_update()
+                .filter(offer=tx.plan.offer, wilaya_code=formatted_wilaya_code)
+                .first()
+            )
             if quota and quota.is_available(tx.quantity_bought):
                 quota.allocated_quota += tx.quantity_bought
                 quota.save()
@@ -140,16 +148,32 @@ def client_offer_draft_and_stock_page(request):
                     request,
                     f"Not enough quota left ({available} available) — couldn't submit '{tx.plan.label}'.",
                 )
-        return redirect(f"{reverse('client_offer_draft_and_stock_page')}?store={store.id}")
+        return redirect(
+            f"{reverse('client_offer_draft_and_stock_page')}?store={store.id}"
+        )
 
-    transactions_qs = StoreOfferTransaction.objects.filter(store=store).select_related("plan__offer")
+    transactions_qs = StoreOfferTransaction.objects.filter(store=store).select_related(
+        "plan__offer"
+    )
 
-    draft_items = transactions_qs.filter(status=StoreOfferTransaction.STATUS_DRAFT).order_by("-created_at")
-    pending_items = transactions_qs.filter(status=StoreOfferTransaction.STATUS_PENDING).order_by("-created_at")
-    accepted_items = transactions_qs.filter(status=StoreOfferTransaction.STATUS_APPROVED).order_by("-created_at")
-    blocked_items = transactions_qs.filter(status=StoreOfferTransaction.STATUS_BLOCKED).order_by("-created_at")
+    draft_items = transactions_qs.filter(
+        status=StoreOfferTransaction.STATUS_DRAFT
+    ).order_by("-created_at")
+    pending_items = transactions_qs.filter(
+        status=StoreOfferTransaction.STATUS_PENDING
+    ).order_by("-created_at")
+    accepted_items = transactions_qs.filter(
+        status=StoreOfferTransaction.STATUS_APPROVED
+    ).order_by("-created_at")
+    blocked_items = transactions_qs.filter(
+        status=StoreOfferTransaction.STATUS_BLOCKED
+    ).order_by("-created_at")
 
-    stock_qs = ( StoreStock.objects.filter(store=store).select_related("plan__offer").order_by("plan__offer__title", "plan__label"))
+    stock_qs = (
+        StoreStock.objects.filter(store=store)
+        .select_related("plan__offer")
+        .order_by("plan__offer__title", "plan__label")
+    )
 
     return render(
         request,

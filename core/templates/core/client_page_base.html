@@ -33,7 +33,8 @@
                         <a href="{% url 'client_index_page' %}" class="nav-text-link">Offers</a>
                         {% if user.is_authenticated %}
                             <a href="{% url 'client_offer_manage_page' %}" class="nav-text-link">Manage</a>
-                            <a href="{% url 'client_offer_draft_and_stock_page' %}" class="nav-text-link">Stock</a>
+                            <a href="{% url 'client_offer_draft_and_stock_page' %}"
+                               class="nav-text-link">Stock</a>
                             <div class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle position-relative"
                                    href="#"

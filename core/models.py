@@ -160,6 +160,7 @@ class OfferPlan(models.Model):
     def __str__(self):
         return f"{self.offer.title} — {self.label or self.data_amount_gb}Go — {self.price_da} DA"
 
+
 class OfferQuota(models.Model):
     offer = models.ForeignKey(
         Offer, on_delete=models.CASCADE, related_name="wilaya_quotas"

@@ -94,7 +94,9 @@ def offer_detail_page(request, offer_slug):
                 offer=offer, wilaya_code=formatted_wilaya_code
             ).first()
 
-            if not current_quota or not current_quota.is_available(existing_qty + quantity):
+            if not current_quota or not current_quota.is_available(
+                existing_qty + quantity
+            ):
                 available = current_quota.remaining_quota if current_quota else 0
                 messages.error(
                     request,
@@ -168,7 +170,8 @@ def offer_detail_page(request, offer_slug):
 
                 store_room_left = (
                     current_quota.remaining_for_store(selected_store)
-                    if current_quota else 0
+                    if current_quota
+                    else 0
                 )
 
                 if (
@@ -209,7 +212,9 @@ def offer_detail_page(request, offer_slug):
                             f"You can join the waitlist instead.",
                         )
                     else:
-                        available = current_quota.remaining_quota if current_quota else 0
+                        available = (
+                            current_quota.remaining_quota if current_quota else 0
+                        )
                         messages.error(
                             request,
                             f"Order failed. Requested {quantity} units, but only {available} remaining for your Wilaya. "
@@ -235,7 +240,8 @@ def offer_detail_page(request, offer_slug):
         "quota_info": quota_info,
         "store_purchase_room": (
             quota_info.remaining_for_store(selected_store)
-            if quota_info and selected_store else None
+            if quota_info and selected_store
+            else None
         ),
         "store_waitlist_total": store_waitlist_total,
     }

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Access Denied</title>
-  <style>
+    <head>
+        <meta charset="UTF-8">
+        <title>Access Denied</title>
+        <style>
     body {
       font-family: sans-serif;
       display: flex;
@@ -38,17 +38,17 @@
     a:hover {
       text-decoration: underline;
     }
-  </style>
-</head>
-<body>
-  <div class="box">
-    <h1>403</h1>
-    {% if request.user.is_authenticated and request.user.client_profile %}
-      <p>This page is for commercial accounts only.</p>
-      <a href="{% url 'client_index_page' %}">Exit</a>
-    {% else %}
-      <p>You don't have permission to view this page.</p>
-    {% endif %}
-  </div>
-</body>
+        </style>
+    </head>
+    <body>
+        <div class="box">
+            <h1>403</h1>
+            {% if request.user.is_authenticated and request.user.client_profile %}
+                <p>This page is for commercial accounts only.</p>
+                <a href="{% url 'client_index_page' %}">Exit</a>
+            {% else %}
+                <p>You don't have permission to view this page.</p>
+            {% endif %}
+        </div>
+    </body>
 </html>

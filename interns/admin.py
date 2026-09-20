@@ -6,7 +6,13 @@ from .forms import CommercialAdminForm
 @admin.register(Commercial)
 class CommercialAdmin(admin.ModelAdmin):
     form = CommercialAdminForm
-    list_display = ("user", "phone", "access_rights", "modifications_rights", "created_at")
+    list_display = (
+        "user",
+        "phone",
+        "access_rights",
+        "modifications_rights",
+        "created_at",
+    )
 
     def user(self, obj):
         return f"{obj.user.first_name} {obj.user.last_name}"

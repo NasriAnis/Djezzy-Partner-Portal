@@ -14,12 +14,13 @@ from interns.forms import (
 
 from .utils_views import commercial_required, get_commercial_info
 
+
 @login_required(login_url="commercials_login")
 @commercial_required
 def commercials_offers_page(request):
     _, can_edit, commercial_type = get_commercial_info(request)
 
-    if request.method == "POST" and commercial_type == "MO" :
+    if request.method == "POST" and commercial_type == "MO":
         if not can_edit:
             messages.error(request, "You have read-only access.")
             return redirect("commercials_offers_page")

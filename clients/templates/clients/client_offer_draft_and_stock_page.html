@@ -7,7 +7,6 @@
                 <div class="alert alert-info">{{ message }}</div>
             {% endfor %}
         {% endif %}
-
         {% if not store %}
             <p class="text-light">No store found on your account yet.</p>
         {% else %}
@@ -22,9 +21,7 @@
                     </select>
                 </form>
             {% endif %}
-
             <h2 class="text-light mb-3">{{ store.name }}</h2>
-
             <!-- ============ ACCEPTED ============ -->
             <div class="card mb-2">
                 <div class="card-header p-0">
@@ -65,7 +62,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- ============ PENDING ============ -->
             <div class="card mb-2">
                 <div class="card-header p-0">
@@ -106,7 +102,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- ============ BLOCKED ============ -->
             <div class="card mb-2">
                 <div class="card-header p-0">
@@ -147,7 +142,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- ============ DRAFT ============ -->
             <div class="card mb-2">
                 <div class="card-header p-0">
@@ -182,9 +176,7 @@
                                                 <input type="hidden" name="action" value="submit_draft">
                                                 <input type="hidden" name="store_id" value="{{ store.id }}">
                                                 <input type="hidden" name="tx_id" value="{{ tx.id }}">
-                                                <button type="submit" class="btn btn-sm btn-primary">
-                                                    Move to Pending
-                                                </button>
+                                                <button type="submit" class="btn btn-sm btn-primary">Move to Pending</button>
                                             </form>
                                         </td>
                                     </tr>
@@ -198,7 +190,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- ============ STOCK ============ -->
             <div class="card mb-2">
                 <div class="card-header p-0">

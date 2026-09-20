@@ -6,6 +6,7 @@ from ..models import Commune
 
 ########## Utils ##########
 
+
 def client_logout(request):
     logout(request)
     return redirect("client_login")

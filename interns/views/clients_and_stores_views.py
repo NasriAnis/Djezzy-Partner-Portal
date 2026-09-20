@@ -12,6 +12,7 @@ from notifications.utils import notify
 from .utils_views import commercial_required, get_commercial_info
 from core.models import OfferQuota
 
+
 @login_required(login_url="commercials_login")
 @commercial_required
 def commercials_clients_page(request):
@@ -68,6 +69,7 @@ def commercials_clients_page(request):
         context["clients"] = clients.distinct().order_by("user__date_joined")
 
     return render(request, "interns/commercials_clients_page.html", context)
+
 
 @login_required(login_url="commercials_login")
 @commercial_required
@@ -244,6 +246,7 @@ def commercials_block_store(request, store_id):
         notify(
             store.client, f"Your store {store.name} has been blocked: {reason}", store
         )
+
 
 @login_required(login_url="commercials_login")
 @commercial_required

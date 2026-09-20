@@ -7,6 +7,7 @@ from clients.models import Client, Store
 
 from .utils_views import commercial_required, get_commercial_info
 
+
 def commercials_index_page(request):
     if request.user.is_authenticated:
         return redirect("commercials_dashboard_page")

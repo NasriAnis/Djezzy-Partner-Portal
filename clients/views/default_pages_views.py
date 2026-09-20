@@ -9,6 +9,7 @@ from ..models import Client, Store, StoreOfferTransaction
 
 ########## Pages ##########
 
+
 def client_signup(request):
     if request.method == "POST":
         form = ClientSignupForm(request.POST)
