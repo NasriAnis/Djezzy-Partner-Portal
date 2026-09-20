@@ -1,6 +1,8 @@
-# Quota Management System
+<p align="center">
+  <img src="docs/assets/logo-without-backround.png" alt="Djezzy Partner Portal Logo" width="500">
+</p>
 
-A Django-based platform for telecom operators (e.g. Djezzy) to manage offers sold through outside sellers. Lets operators set purchase thresholds (seuils) per wilaya and per boutique, track consumption against those limits, and control distribution across their reseller network.
+A Django-based platform for Djezzy Telecom Operator (Build during my internship) to manage offers sold through outside sellers. Lets operators set purchase thresholds (seuils) per wilaya and per boutique, track consumption against those limits, and control distribution across their reseller network.
 
 ## Docs
 Documentation about the site is available in [`docs`](./Docs), which contains:
@@ -10,41 +12,19 @@ Documentation about the site is available in [`docs`](./Docs), which contains:
 ## Project Structure
 
 ```
-├── config/        # Project settings, root URLconf, WSGI/ASGI entrypoints
-│ ├── settings.py
-│ ├── urls.py
-│ ├── asgi.py
-│ └── wsgi.py
-├── core/          # Shared static assets, base templates, landing/home routes
-│ ├── static/
-│ ├── templates/
-│ ├── urls.py
-│ └── views.py
-├── clients/       # Client-facing app (signup, login, account page)
-│ ├── models.py    # Client, Store, StoreOfferTransaction, StoreStock, OfferSale models
-│ ├── views.py
-│ ├── forms.py
-│ ├── backends.py          # Custom EmailBackend for authentication
-│ ├── urls.py
-│ └── templates/clients/
-├── interns/               # Commercial/staff-facing app
-│ ├── models.py            # Commercial model (OneToOne -> User)
-│ ├── admin.py             # Custom admin form for creating commercials
-│ ├── forms.py             # CommercialAdminForm (creates User + Commercial together)
-│ ├── views.py
-│ ├── urls.py
-│ └── templates/interns/
-├── notifications/           # In-app notification system
-│ ├── models.py
-│ ├── admin.py
-│ ├── utils.py               # notify() utility function
-│ ├── context_processors.py  # Injects notifications into template context
-│ ├── views.py
-│ ├── urls.py
-│ └── templates/notifications/
-├── shared/                      # Cross-app reusable code (no models required)
+├── config/           # Project settings, root URLconf, WSGI/ASGI entrypoints
 │ └── ...
-├── media/ # User-uploaded files
+├── core/             # Shared static assets, base templates, landing/home routes
+│ └── ...
+├── clients/          # Client-facing app (signup, login, account page)
+│ └── ...
+├── interns/          # Commercial/staff-facing app
+│ └── ...
+├── notifications/    # In-app notification system
+│ └── ...
+├── shared/           # Cross-app reusable code (no models required)
+│ └── ...
+├── media/            # User-uploaded files
 └── manage.py
 ```
 
