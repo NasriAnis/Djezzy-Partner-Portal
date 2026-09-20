@@ -138,6 +138,7 @@
                         <th>Total Quota</th>
                         <th>Allocated</th>
                         <th>Remaining</th>
+                        <th>Max % / client</th>
                         {% if can_edit %}<th class="text-end">Actions</th>{% endif %}
                     </tr>
                 </thead>
@@ -148,6 +149,14 @@
                             <td>{{ quota.total_quota }}</td>
                             <td>{{ quota.allocated_quota }}</td>
                             <td class="{% if quota.remaining_quota == 0 %}text-danger{% endif %}">{{ quota.remaining_quota }}</td>
+                            <td>
+                                {% if quota.percentage_by_client %}
+                                    {{ quota.percentage_by_client|floatformat:0 }}%
+                                    <span class="text-secondary small">({{ quota.max_quantity_per_client }} units)</span>
+                                {% else %}
+                                    <span class="text-secondary">No cap</span>
+                                {% endif %}
+                            </td>
                             {% if can_edit %}
                                 <td class="text-end">
                                     <button type="button"
@@ -162,7 +171,7 @@
                             {% endif %}
                         </tr>
                     {% empty %}
-                        <tr><td colspan="{% if can_edit %}5{% else %}4{% endif %}"
+                        <tr><td colspan="{% if can_edit %}6{% else %}5{% endif %}"
     class="text-secondary">No quotas set for any wilaya yet.</td></tr>
                     {% endfor %}
                 </tbody>
@@ -364,6 +373,14 @@
                                 <label class="form-label">{{ quota_form.total_quota.label }}</label>
                                 {{ quota_form.total_quota }}
                             </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ quota_form.percentage_by_client.label }}</label>
+                                {{ quota_form.percentage_by_client }}
+                                <div class="form-text">Max % of the total quota one client/store can hold for this offer. Leave at 0 for no cap.</div>
+                                {% if quota_form.percentage_by_client.errors %}
+                                    <div class="text-danger small">{{ quota_form.percentage_by_client.errors|join:", " }}</div>
+                                {% endif %}
+                            </div>
                         </div>
                         <div class="modal-footer border-secondary">
                             <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
@@ -406,6 +423,17 @@
                                            class="form-control"
                                            value="{{ quota.total_quota }}"
                                            required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Max %% per client</label>
+                                    <input type="number"
+                                           step="0.01"
+                                           min="0"
+                                           max="100"
+                                           name="percentage_by_client"
+                                           class="form-control"
+                                           value="{{ quota.percentage_by_client }}">
+                                    <div class="form-text">Leave at 0 for no per-client cap.</div>
                                 </div>
                             </div>
                             <div class="modal-footer border-secondary">

@@ -101,6 +101,17 @@ def offer_detail_page(request, offer_slug):
                 )
                 return redirect("offer_detail_page", offer_slug=offer.slug)
 
+            store_room_left = current_quota.remaining_for_store(selected_store)
+            if quantity > store_room_left:
+                messages.error(
+                    request,
+                    f"Can't add {quantity} — your store can request at most "
+                    f"{current_quota.max_quantity_per_client} units "
+                    f"({current_quota.percentage_by_client}% of quota) for this offer. "
+                    f"{store_room_left} still available to you.",
+                )
+                return redirect("offer_detail_page", offer_slug=offer.slug)
+
             with transaction.atomic():
                 store_tx, created = StoreOfferTransaction.objects.get_or_create(
                     store=selected_store,
@@ -127,7 +138,16 @@ def offer_detail_page(request, offer_slug):
                     .first()
                 )
 
-                if current_quota and current_quota.is_available(quantity):
+                store_room_left = (
+                    current_quota.remaining_for_store(selected_store)
+                    if current_quota else 0
+                )
+
+                if (
+                    current_quota
+                    and current_quota.is_available(quantity)
+                    and quantity <= store_room_left
+                ):
                     store_tx, created = StoreOfferTransaction.objects.get_or_create(
                         store=selected_store,
                         plan=plan,
@@ -147,16 +167,34 @@ def offer_detail_page(request, offer_slug):
                     )
                     return redirect("offer_detail_page", offer_slug=offer.slug)
                 else:
-                    available = current_quota.remaining_quota if current_quota else 0
-                    messages.error(
-                        request,
-                        f"Order failed. Requested {quantity} units, but only {available} remaining for your Wilaya.",
-                    )
+                    if (
+                        current_quota
+                        and current_quota.is_available(quantity)
+                        and quantity > store_room_left
+                    ):
+                        messages.error(
+                            request,
+                            f"Order failed. Your store can request at most "
+                            f"{current_quota.max_quantity_per_client} units "
+                            f"({current_quota.percentage_by_client}% of quota) for this offer. "
+                            f"{store_room_left} still available to you.",
+                        )
+                    else:
+                        available = current_quota.remaining_quota if current_quota else 0
+                        messages.error(
+                            request,
+                            f"Order failed. Requested {quantity} units, but only {available} remaining for your Wilaya.",
+                        )
+
     context = {
         "offer": offer,
         "offer_plans": offer_plans,
         "user_stores": user_stores,
         "selected_store": selected_store,
         "quota_info": quota_info,
+        "store_purchase_room": (
+            quota_info.remaining_for_store(selected_store)
+            if quota_info and selected_store else None
+        ),
     }
     return render(request, "core/offer_details_page.html", context)

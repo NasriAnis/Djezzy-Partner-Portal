@@ -107,10 +107,22 @@ class OfferPlanForm(forms.ModelForm):
 class OfferQuotaForm(forms.ModelForm):
     class Meta:
         model = OfferQuota
-        fields = ["wilaya_code", "total_quota"]
+        fields = ["wilaya_code", "total_quota", "percentage_by_client"]
         widgets = {
             "wilaya_code": forms.Select(
                 choices=WILAYA_CHOICES, attrs={"class": "form-select"}
             ),
             "total_quota": forms.NumberInput(attrs={"class": "form-control"}),
+            "percentage_by_client": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": 0,
+                    "max": 100,
+                    "step": "0.01",
+                    "placeholder": "0 = no per-client cap",
+                }
+            ),
+        }
+        labels = {
+            "percentage_by_client": "Max %% per client (0 = no cap)",
         }

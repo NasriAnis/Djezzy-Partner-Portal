@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 WILAYA_CHOICES = [
     ("01", "Adrar"),
@@ -171,6 +172,13 @@ class OfferQuota(models.Model):
     allocated_quota = models.PositiveIntegerField(
         default=0, help_text="Units currently assigned to stores/clients"
     )
+    percentage_by_client = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Max %% of total_quota a single store/client can hold for this offer. 0 = no per-client cap.",
+    )
 
     class Meta:
         verbose_name = "Offer Wilaya Quota"
@@ -186,6 +194,36 @@ class OfferQuota(models.Model):
 
     def is_available(self, quantity=1):
         return self.remaining_quota >= quantity
+
+    @property
+    def max_quantity_per_client(self):
+        """Absolute unit cap for one store, derived from percentage_by_client."""
+        return int(self.total_quota * self.percentage_by_client / 100)
+
+    def quantity_used_by(self, store):
+        """Units this store already holds (draft + pending + approved) for this offer."""
+        from django.db.models import Sum
+        from clients.models import StoreOfferTransaction
+
+        total = (
+            StoreOfferTransaction.objects.filter(
+                store=store,
+                plan__offer=self.offer,
+            )
+            .exclude(status=StoreOfferTransaction.STATUS_BLOCKED)
+            .aggregate(total=Sum("quantity_bought"))["total"]
+        )
+        return total or 0
+
+    def remaining_for_store(self, store):
+        """
+        How many more units this store can still request.
+        percentage_by_client == 0 means "no per-client cap" — falls back to remaining_quota.
+        """
+        if not self.percentage_by_client:
+            return self.remaining_quota
+        used = self.quantity_used_by(store)
+        return max(0, min(self.max_quantity_per_client - used, self.remaining_quota))
 
     def __str__(self):
         return f"{self.offer.title} - {self.get_wilaya_code_display()}: {self.remaining_quota}/{self.total_quota} left"
