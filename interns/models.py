@@ -11,14 +11,14 @@ class Commercial(models.Model):
     phone = models.DecimalField(max_digits=10, decimal_places=0, unique=True)
 
     class AccessRights(models.TextChoices):
-        READ_ONLY = "RO", "Read Only"
-        READ_WRITE = "RW", "Read and Write"
+        MANAGE_CLIENTS = "MC", "Manage Clients"
+        MANAGE_OFFERS = "MO", "Manage Offers"
 
     access_rights = models.CharField(
         max_length=2,
         choices=AccessRights.choices,
-        default=AccessRights.READ_ONLY,
     )
+    modifications_rights = models.BooleanField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

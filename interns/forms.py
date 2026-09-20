@@ -20,7 +20,7 @@ class CommercialAdminForm(forms.ModelForm):
 
     class Meta:
         model = Commercial
-        fields = ["phone", "access_rights"]
+        fields = ["phone", "access_rights", "modifications_rights"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

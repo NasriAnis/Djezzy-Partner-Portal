@@ -38,14 +38,18 @@ def commercial_required(view_func):
 ########### Utils ###########
 
 
-def _get_commercial(request):
+def get_commercial_info(request):
     """Helper: returns (commercial, can_edit)."""
     commercial = getattr(request.user, "commercial_profile", None)
     can_edit = (
         bool(commercial)
-        and commercial.access_rights == commercial.AccessRights.READ_WRITE
+        and commercial.modifications_rights
     )
-    return commercial, can_edit
+    if commercial:
+        commercial_type = commercial.access_rights
+    else:
+        commercial_type = False
+    return commercial, can_edit, commercial_type
 
 
 def commercials_logout(request):
@@ -82,7 +86,7 @@ def commercials_login(request):
 @login_required(login_url="commercials_login")
 @commercial_required
 def commercials_dashboard_page(request):
-    commercial, _ = _get_commercial(request)
+    commercial, _, _ = get_commercial_info(request)
 
     my_stores = Store.objects.filter(commmercial=commercial)
 
@@ -102,9 +106,9 @@ def commercials_dashboard_page(request):
 @login_required(login_url="commercials_login")
 @commercial_required
 def commercials_offers_page(request):
-    _, can_edit = _get_commercial(request)
+    _, can_edit, commercial_type = get_commercial_info(request)
 
-    if request.method == "POST":
+    if request.method == "POST" and commercial_type == "MO" :
         if not can_edit:
             messages.error(request, "You have read-only access.")
             return redirect("commercials_offers_page")
@@ -175,9 +179,9 @@ def commercials_offers_page(request):
 @commercial_required
 def commercials_offer_edit_page(request, slug):
     offer = get_object_or_404(Offer, slug=slug)
-    _, can_edit = _get_commercial(request)
+    _, can_edit, commercial_type = get_commercial_info(request)
 
-    if request.method == "POST":
+    if request.method == "POST" and commercial_type == "MO":
         if not can_edit:
             messages.error(request, "You have read-only access.")
             return redirect("commercials_offer_edit_page", slug=slug)
@@ -278,7 +282,7 @@ def commercials_offer_edit_page(request, slug):
 @login_required(login_url="commercials_login")
 @commercial_required
 def commercials_clients_page(request):
-    commercial, can_edit = _get_commercial(request)
+    commercial, can_edit, commercial_type = get_commercial_info(request)
     view_filter = request.GET.get("view", "all")
     context = {"view_filter": view_filter}
 
@@ -325,7 +329,7 @@ def commercials_clients_page(request):
 @login_required(login_url="commercials_login")
 @commercial_required
 def commercials_store_detail_page(request, store_id):
-    commercial, _ = _get_commercial(request)
+    commercial, _, _ = get_commercial_info(request)
     store = get_object_or_404(
         Store.objects.select_related("client__user", "comune"),
         id=store_id,
@@ -339,7 +343,7 @@ def commercials_store_detail_page(request, store_id):
 @login_required(login_url="commercials_login")
 @commercial_required
 def commercials_client_detail_page(request, client_id):
-    commercial, _ = _get_commercial(request)
+    commercial, _, _ = get_commercial_info(request)
     client = get_object_or_404(Client, id=client_id)
     stores = client.locations.filter(commmercial=commercial)
     transactions = (
@@ -366,8 +370,8 @@ def commercials_client_detail_page(request, client_id):
 @commercial_required
 @require_POST
 def commercials_approve_transaction(request, transaction_id):
-    commercial, can_edit = _get_commercial(request)
-    if not can_edit:
+    commercial, can_edit, commercial_type = get_commercial_info(request)
+    if not can_edit and commercial_type != "MC":
         messages.error(request, "You have read-only access.")
         return redirect("commercials_clients_page")
 
@@ -410,8 +414,8 @@ def commercials_approve_transaction(request, transaction_id):
 @commercial_required
 @require_POST
 def commercials_deny_transaction(request, transaction_id):
-    commercial, can_edit = _get_commercial(request)
-    if not can_edit:
+    commercial, can_edit, commercial_type = get_commercial_info(request)
+    if not can_edit and commercial_type != "MC":
         messages.error(request, "You have read-only access.")
         return redirect("commercials_clients_page")
 
@@ -453,8 +457,8 @@ def commercials_deny_transaction(request, transaction_id):
 @commercial_required
 @require_POST
 def commercials_approve_store(request, store_id):
-    commercial, can_edit = _get_commercial(request)
-    if not can_edit:
+    commercial, can_edit, commercial_type = get_commercial_info(request)
+    if not can_edit and commercial_type != "MC":
         messages.error(request, "You have read-only access.")
         return redirect("commercials_store_detail_page", store_id=store_id)
 
@@ -475,8 +479,8 @@ def commercials_approve_store(request, store_id):
 @commercial_required
 @require_POST
 def commercials_block_store(request, store_id):
-    commercial, can_edit = _get_commercial(request)
-    if not can_edit:
+    commercial, can_edit, commercial_type = get_commercial_info(request)
+    if not can_edit and commercial_type != "MC":
         messages.error(request, "You have read-only access.")
         return redirect("commercials_store_detail_page", store_id=store_id)
 
