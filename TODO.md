@@ -1,5 +1,5 @@
 # TODO
-- [ ] Implement a better "en attente de reaprovisionement" 1 time commercial approvment
+- [ ] Implement a better workflow for "en attente de reaprovisionement" offer, so the commercial can approve in order of time between waitlist and pendings
 - [ ] Implement a total "en attente de reaprovisionement" offer count for the "offer managment" commercial
 - [ ] Implement a messageri between client and commercial in addition to commercial comments for clients
 - [ ] Implement notifications for commercials when quotas is low
@@ -10,6 +10,7 @@
 - [ ] Writting good documentation for internals
 
 # Done
+- [x] Implement a better "en attente de reaprovisionement" 1 time commercial approvment
 - [x] Implement notifications for clients when a offer or store get approved or blocked "with comment"
 - [x] Implement "en attente de reaprovisionement" for clients when quotas is too low "using FIFO"
 - [x] Implement dockerfile for cross device and deployment
