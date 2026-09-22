@@ -54,6 +54,11 @@
             </nav>
             <!-- ============ MAIN CONTENT ============ -->
             <main class="flex-grow-1 p-4">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} py-2">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
                 {% block content %}{% endblock %}
             </main>
         </div>

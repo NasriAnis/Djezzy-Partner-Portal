@@ -16,11 +16,6 @@
             </div>
         {% endif %}
     </div>
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} py-2">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
     <!-- ============ CATEGORIES + NESTED OFFERS ============ -->
     {% for category in categories %}
         <div class="card mb-3">
