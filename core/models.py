@@ -227,16 +227,8 @@ class OfferQuota(models.Model):
         return max(0, min(self.max_quantity_per_client - used, self.remaining_quota))
 
     def process_waitlist(self):
-        """
-        Fulfil waitlisted transactions for this quota, oldest first (FIFO).
-        Each entry is fulfilled fully if enough quota is available for it and
-        the requesting store hasn't hit its own per-client cap; otherwise it's
-        fulfilled partially (a new PENDING transaction is split off for the
-        available amount, and the original entry stays WAITLISTED for the rest).
-        Call this any time total_quota or allocated_quota might have freed up
-        room — e.g. right after a commercial increases total_quota.
-        """
-        from clients.models import StoreOfferTransaction
+        from clients.models import StoreOfferTransaction, StoreStock
+        from django.db.models import F
 
         if self.remaining_quota <= 0:
             return
@@ -257,25 +249,31 @@ class OfferQuota(models.Model):
 
             available = min(self.remaining_quota, self.remaining_for_store(tx.store))
             if available <= 0:
-                # This store is at its own cap for now — skip it, keep checking
-                # later entries so one blocked store doesn't stall the queue.
                 continue
 
+            approved_qty = min(tx.quantity_bought, available)
+
+            stock_obj, created = StoreStock.objects.select_for_update().get_or_create(
+                store=tx.store, plan=tx.plan, defaults={"stock": approved_qty}
+            )
+            if not created:
+                stock_obj.stock = F("stock") + approved_qty
+                stock_obj.save(update_fields=["stock"])
+
             if tx.quantity_bought <= available:
-                tx.status = StoreOfferTransaction.STATUS_PENDING
+                tx.status = StoreOfferTransaction.STATUS_APPROVED
                 tx.save(update_fields=["status"])
-                self.allocated_quota += tx.quantity_bought
             else:
                 StoreOfferTransaction.objects.create(
                     store=tx.store,
                     plan=tx.plan,
-                    quantity_bought=available,
-                    status=StoreOfferTransaction.STATUS_PENDING,
+                    quantity_bought=approved_qty,
+                    status=StoreOfferTransaction.STATUS_APPROVED,
                 )
-                tx.quantity_bought -= available
+                tx.quantity_bought -= approved_qty
                 tx.save(update_fields=["quantity_bought"])
-                self.allocated_quota += available
 
+            self.allocated_quota += approved_qty
             self.save(update_fields=["allocated_quota"])
 
     def __str__(self):

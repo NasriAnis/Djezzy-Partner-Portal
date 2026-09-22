@@ -286,44 +286,53 @@ def commercials_fulfill_waitlist_transaction(request, transaction_id):
             )
             return redirect(fallback_url)
 
+        approved_qty = min(tx.quantity_bought, available)
+
+        # Same stock-bump logic that used to live only in commercials_approve_transaction
+        stock_obj, created = StoreStock.objects.select_for_update().get_or_create(
+            store=tx.store, plan=tx.plan, defaults={"stock": approved_qty}
+        )
+        if not created:
+            stock_obj.stock = F("stock") + approved_qty
+            stock_obj.save(update_fields=["stock"])
+
+        quota.allocated_quota += approved_qty
+        quota.save(update_fields=["allocated_quota"])
+
         if tx.quantity_bought <= available:
-            tx.status = StoreOfferTransaction.STATUS_PENDING
+            # fully covered: approve this same row, no second row created
+            tx.status = StoreOfferTransaction.STATUS_APPROVED
             tx.save(update_fields=["status"])
-            quota.allocated_quota += tx.quantity_bought
-            quota.save(update_fields=["allocated_quota"])
 
             messages.success(
                 request,
-                f"Moved {tx.quantity_bought}x '{tx.plan.label}' for {tx.store.name} "
-                f"to Pending Offers — approve it there to finalize.",
+                f"Approved {approved_qty}x '{tx.plan.label}' for {tx.store.name}.",
             )
             notify(
                 tx.store.client,
-                f"Your waitlisted request for {tx.quantity_bought}x '{tx.plan.label}' "
-                f"is now pending approval!",
+                f"Your transaction for {approved_qty}x '{tx.plan.label}' has been approved!",
                 tx.store,
             )
         else:
+            # partial: split off an approved row for what's covered, keep the rest waitlisted
             StoreOfferTransaction.objects.create(
                 store=tx.store,
                 plan=tx.plan,
-                quantity_bought=available,
-                status=StoreOfferTransaction.STATUS_PENDING,
+                quantity_bought=approved_qty,
+                status=StoreOfferTransaction.STATUS_APPROVED,
             )
-            tx.quantity_bought -= available
+            tx.quantity_bought -= approved_qty
             tx.save(update_fields=["quantity_bought"])
-            quota.allocated_quota += available
-            quota.save(update_fields=["allocated_quota"])
 
             messages.success(
                 request,
-                f"Partially fulfilled {available}x '{tx.plan.label}' for {tx.store.name} "
+                f"Approved {approved_qty}x '{tx.plan.label}' for {tx.store.name} "
                 f"({tx.quantity_bought} units still waiting).",
             )
             notify(
                 tx.store.client,
-                f"{available}x '{tx.plan.label}' from your waitlisted request "
-                f"is now pending approval! ({tx.quantity_bought} still waiting)",
+                f"{approved_qty}x '{tx.plan.label}' from your waitlisted request "
+                f"has been approved! ({tx.quantity_bought} still waiting)",
                 tx.store,
             )
 
