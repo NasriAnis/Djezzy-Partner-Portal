@@ -6,6 +6,7 @@ from core.models import Offer
 from clients.models import Client, Store
 
 from .utils_views import commercial_required, get_commercial_info
+from .permissions import scope_by_commercial
 
 
 def commercials_index_page(request):
@@ -34,15 +35,16 @@ def commercials_login(request):
 @login_required(login_url="commercials_login")
 @commercial_required
 def commercials_dashboard_page(request):
-    commercial, _, _ = get_commercial_info(request)
+    commercial, _, commercial_type = get_commercial_info(request)
 
-    my_stores = Store.objects.filter(commmercial=commercial)
+    my_stores = scope_by_commercial(Store.objects.all(), commercial, commercial_type)
+    my_clients = scope_by_commercial(
+        Client.objects.all(), commercial, commercial_type, field="locations__commmercial"
+    )
 
     context = {
         "offers_count": Offer.objects.count(),
-        "clients_count": Client.objects.filter(locations__commmercial=commercial)
-        .distinct()
-        .count(),
+        "clients_count": my_clients.distinct().count(),
         "stores_count": my_stores.count(),
         "recent_stores": my_stores.select_related("client__user").order_by(
             "-created_at"

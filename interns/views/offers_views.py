@@ -13,6 +13,7 @@ from interns.forms import (
 )
 
 from .utils_views import commercial_required, get_commercial_info
+from .permissions import can_perform, MANAGE_OFFERS
 
 
 @login_required(login_url="commercials_login")
@@ -20,9 +21,9 @@ from .utils_views import commercial_required, get_commercial_info
 def commercials_offers_page(request):
     _, can_edit, commercial_type = get_commercial_info(request)
 
-    if request.method == "POST" and commercial_type == "MO":
-        if not can_edit:
-            messages.error(request, "You have read-only access.")
+    if request.method == "POST":
+        if not can_perform(can_edit, commercial_type, MANAGE_OFFERS):
+            messages.error(request, "You don't have access to manage offers.")
             return redirect("commercials_offers_page")
 
         form_type = request.POST.get("form_type")
@@ -93,9 +94,9 @@ def commercials_offer_edit_page(request, slug):
     offer = get_object_or_404(Offer, slug=slug)
     _, can_edit, commercial_type = get_commercial_info(request)
 
-    if request.method == "POST" and commercial_type == "MO":
-        if not can_edit:
-            messages.error(request, "You have read-only access.")
+    if request.method == "POST":
+        if not can_perform(can_edit, commercial_type, MANAGE_OFFERS):
+            messages.error(request, "You don't have access to manage offers.")
             return redirect("commercials_offer_edit_page", slug=slug)
 
         form_type = request.POST.get("form_type")
