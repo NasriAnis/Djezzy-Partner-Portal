@@ -26,6 +26,24 @@
                         <span class="tag">Commercial</span>
                     </span>
                 </a>
+
+                {% if current_commercial %}
+                    <div class="djz-commercial-hint mb-4 px-2 py-2 rounded"
+                         style="background: var(--djz-surface-2);">
+                        <div class="fw-semibold small text-truncate">
+                            {{ current_commercial.user.get_full_name|default:current_commercial.user.username }}
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <span class="badge {% if current_commercial_type == 'MA' %}bg-danger{% elif current_commercial_type == 'MO' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+                                {{ current_commercial_type_label }}
+                            </span>
+                            {% if not current_commercial_can_edit %}
+                                <span class="badge bg-warning text-dark">Read-only</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
                 <ul class="nav djz-sidenav flex-column gap-1">
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.url_name == 'commercials_dashboard_page' %}active{% endif %}"
