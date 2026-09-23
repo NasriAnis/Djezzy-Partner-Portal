@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from interns.models import Commercial
 from shared.models import WILAYA_CHOICES
 
+
 class Client(models.Model):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="client_profile"
@@ -74,10 +75,28 @@ class Store(models.Model):
 
     def save(self, *args, **kwargs):
         if self._state.adding and not self.commmercial_id:
-            from .services import get_least_loaded_commercial
+            from django.db.models import Count, Q
+            from .models import Commercial, Store
 
-            self.commmercial = get_least_loaded_commercial()
-        super().save(*args, **kwargs)
+            active_statuses = [Store.STATUS_PENDING, Store.STATUS_APPROVED]
+
+            self.commerical = (
+                Commercial.objects.filter(
+                    manage_clients_rights=True,
+                    modifications_rights=True,
+                    is_active=True,
+                )
+                .annotate(
+                    store_count=Count(
+                        "store",
+                        filter=Q(store__status__in=active_statuses),
+                    )
+                )
+                .order_by("store_count", "id")
+                .first()
+            )
+
+            super().save(*args, **kwargs)
 
 
 class StoreOfferTransaction(models.Model):

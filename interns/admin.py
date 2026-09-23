@@ -9,7 +9,9 @@ class CommercialAdmin(admin.ModelAdmin):
     list_display = (
         "user",
         "phone",
-        "access_rights",
+        "manage_clients_rights",
+        "manage_offers_rights",
+        "has_access_to_all",
         "modifications_rights",
         "created_at",
     )

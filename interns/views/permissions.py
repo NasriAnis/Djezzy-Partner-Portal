@@ -1,15 +1,13 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 
-# Access-right codes — mirrors Commercial.access_rights choices
 MANAGE_OFFERS = "MO"
 MANAGE_CLIENTS = "MC"
 MANAGE_ALL = "MA"
 
-
-def can_access(commercial_type, *allowed_types):
-    """True if commercial_type is in allowed_types or is MANAGE_ALL."""
-    return commercial_type == MANAGE_ALL or commercial_type in allowed_types
+def can_access(commercial_rights, *allowed_types):
+    """True if commercial_rights has MANAGE_ALL or any of allowed_types."""
+    return MANAGE_ALL in commercial_rights or bool(commercial_rights & set(allowed_types))
 
 
 def can_perform(can_edit, commercial_type, *allowed_types):
@@ -32,9 +30,8 @@ def guard(
     return redirect_to
 
 
-def scope_by_commercial(queryset, commercial, commercial_type, field="commmercial"):
-    """Restricts queryset to commercial unless commercial_type is MANAGE_ALL."""
-    if commercial_type == MANAGE_ALL:
+def scope_by_commercial(queryset, commercial, commercial_rights, field="commmercial"):
+    if MANAGE_ALL in commercial_rights:
         return queryset
     return queryset.filter(**{field: commercial})
 

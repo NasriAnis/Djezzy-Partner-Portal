@@ -21,7 +21,7 @@ class CommercialAdminForm(forms.ModelForm):
 
     class Meta:
         model = Commercial
-        fields = ["phone", "access_rights", "modifications_rights"]
+        fields = ["phone", "manage_clients_rights", "manage_offers_rights", "has_access_to_all", "modifications_rights"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
