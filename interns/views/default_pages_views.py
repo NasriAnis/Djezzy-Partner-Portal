@@ -12,20 +12,16 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 
 from core.models import Offer
-from clients.models import Client, Store, StoreOfferTransaction, WILAYA_CHOICES
+from clients.models import Client, Store, StoreOfferTransaction
+from shared.models import WILAYA_CHOICES
 
 from .utils_views import commercial_required
 
-# Wilaya boundary polygons used to draw the store-density choropleth on the
-# dashboard map. Expected at <project root>/geo.json.
 GEOJSON_PATH = Path(settings.BASE_DIR) / "wilayas_geo.json"
 
 with open(GEOJSON_PATH, encoding="utf-8") as _f:
     _WILAYA_GEOJSON = json.load(_f)
 
-# The 10 wilayas created in the 2019 split (49-58) don't carry a
-# "city_code" property in the source file, so they're matched by name
-# instead. Adjust the codes here if WILAYA_CHOICES uses different ones.
 NEW_WILAYA_CODES_BY_NAME = {
     "Timimoune": "49",
     "Bordj Badji Mokhtar": "50",
@@ -41,15 +37,13 @@ NEW_WILAYA_CODES_BY_NAME = {
 
 
 def _feature_wilaya_code(feature):
-    """Return the zero-padded wilaya code (e.g. "01") for a geojson feature."""
     props = feature["properties"]
     code = props.get("city_code")
     if code not in (None, ""):
         return str(code).zfill(2)
     return NEW_WILAYA_CODES_BY_NAME.get(props.get("name"))
 
-# Approximate wilaya-capital coordinates, used to position the density map
-# bubbles. These are centroids, not administrative boundaries.
+
 WILAYA_COORDS = {
     "01": (27.870, -0.290),
     "02": (36.165, 1.335),
@@ -127,12 +121,11 @@ def commercials_login(request):
         if user is not None:
             login(request, user)
             return redirect("commercials_dashboard_page")
-        else:
-            return render(
-                request,
-                "interns/commercials_login_page.html",
-                {"error": "Invalid credentials"},
-            )
+        return render(
+            request,
+            "interns/commercials_login_page.html",
+            {"error": "Invalid credentials"},
+        )
     return render(request, "interns/commercials_login_page.html")
 
 
@@ -142,9 +135,6 @@ def commercials_dashboard_page(request):
     all_stores = Store.objects.all()
     all_clients = Client.objects.all()
 
-    # "Djezzy sale" = the operator (Djezzy) selling offer quota to a store,
-    # i.e. an approved StoreOfferTransaction — not OfferSale, which is the
-    # store reselling to its own end customer.
     all_transactions = StoreOfferTransaction.objects.filter(
         status=StoreOfferTransaction.STATUS_APPROVED
     )
@@ -153,7 +143,7 @@ def commercials_dashboard_page(request):
         output_field=DecimalField(max_digits=14, decimal_places=2),
     )
 
-    # --- Monthly offers sold / revenue, last 6 months, company-wide ---
+    # --- Monthly offers sold / revenue, last 6 months ---
     six_months_ago = timezone.now() - timedelta(days=180)
     monthly_qs = (
         all_transactions.filter(created_at__gte=six_months_ago)
@@ -166,7 +156,7 @@ def commercials_dashboard_page(request):
     monthly_sold = [row["offers_sold"] or 0 for row in monthly_qs]
     monthly_revenue = [float(row["revenue"] or 0) for row in monthly_qs]
 
-    # --- Per-wilaya store density, offers sold and revenue, company-wide ---
+    # --- Per-wilaya store density, offers sold and revenue ---
     density_qs = all_stores.values("wilaya").annotate(store_count=Count("id"))
     sales_by_wilaya_qs = (
         all_transactions.annotate(line_total=line_total)
@@ -174,16 +164,17 @@ def commercials_dashboard_page(request):
         .annotate(offers_sold=Sum("quantity_bought"), revenue=Sum("line_total"))
     )
 
-    wilaya_stats = {}
-    for row in density_qs:
-        code = row["wilaya"]
-        wilaya_stats[code] = {
-            "code": code,
-            "name": WILAYA_NAMES.get(code, code),
+    wilaya_stats = {
+        row["wilaya"]: {
+            "code": row["wilaya"],
+            "name": WILAYA_NAMES.get(row["wilaya"], row["wilaya"]),
             "store_count": row["store_count"],
             "offers_sold": 0,
             "revenue": 0.0,
         }
+        for row in density_qs
+    }
+
     for row in sales_by_wilaya_qs:
         code = row["store__wilaya"]
         entry = wilaya_stats.setdefault(
@@ -199,29 +190,33 @@ def commercials_dashboard_page(request):
         entry["offers_sold"] = row["offers_sold"] or 0
         entry["revenue"] = float(row["revenue"] or 0)
 
-    wilaya_list = sorted(wilaya_stats.values(), key=lambda w: w["revenue"], reverse=True)
+    wilaya_list = sorted(
+        wilaya_stats.values(), key=lambda w: w["revenue"], reverse=True
+    )
 
-    # --- Choropleth: merge store/offer/revenue stats onto the wilaya
-    # boundary polygons so the map can color each wilaya by store density.
+    # --- Choropleth ---
     choropleth_features = []
     for feature in _WILAYA_GEOJSON["features"]:
         code = _feature_wilaya_code(feature)
-        stats = wilaya_stats.get(code)
+        stats = wilaya_stats.get(code, {})
         choropleth_features.append(
             {
                 "type": "Feature",
                 "properties": {
                     "name": feature["properties"].get("name"),
                     "code": code,
-                    "store_count": stats["store_count"] if stats else 0,
-                    "offers_sold": stats["offers_sold"] if stats else 0,
-                    "revenue": stats["revenue"] if stats else 0.0,
+                    "store_count": stats.get("store_count", 0),
+                    "offers_sold": stats.get("offers_sold", 0),
+                    "revenue": stats.get("revenue", 0.0),
                 },
                 "geometry": feature["geometry"],
             }
         )
+
     wilaya_geojson = {"type": "FeatureCollection", "features": choropleth_features}
-    max_store_count = max((f["properties"]["store_count"] for f in choropleth_features), default=0)
+    max_store_count = max(
+        (f["properties"]["store_count"] for f in choropleth_features), default=0
+    )
 
     context = {
         "offers_count": Offer.objects.count(),

@@ -12,7 +12,6 @@ def commercial_required(view_func):
             return redirect("commercials_login")
 
         if not hasattr(request.user, "commercial_profile"):
-            # logged in but not a commercial then block
             return render(request, "shared/403.html", status=403)
 
         return view_func(request, *args, **kwargs)
@@ -24,13 +23,10 @@ def commercial_required(view_func):
 
 
 def get_commercial_info(request):
-    """Helper: returns (commercial, can_edit)."""
+    """Helper: returns (commercial, can_edit, commercial_type)."""
     commercial = getattr(request.user, "commercial_profile", None)
-    can_edit = bool(commercial) and commercial.modifications_rights
-    if commercial:
-        commercial_type = commercial.access_rights
-    else:
-        commercial_type = False
+    can_edit = bool(commercial and commercial.modifications_rights)
+    commercial_type = commercial.access_rights if commercial else False
     return commercial, can_edit, commercial_type
 
 

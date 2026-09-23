@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from core.models import OfferCategory, Offer, OfferPlan, OfferQuota, WILAYA_CHOICES
+from core.models import OfferCategory, Offer, OfferPlan, OfferQuota
+from shared.models import WILAYA_CHOICES
 
 from .models import Commercial
 

@@ -35,7 +35,6 @@ def commercials_offers_page(request):
                 messages.success(request, "Category created.")
             else:
                 messages.error(request, "Could not create category — check the form.")
-            return redirect("commercials_offers_page")
 
         elif form_type == "edit_category":
             category = get_object_or_404(
@@ -47,7 +46,6 @@ def commercials_offers_page(request):
                 messages.success(request, "Category updated.")
             else:
                 messages.error(request, "Could not update category — check the form.")
-            return redirect("commercials_offers_page")
 
         elif form_type == "delete_category":
             category = get_object_or_404(
@@ -59,10 +57,8 @@ def commercials_offers_page(request):
                     f"Can't delete '{category.name}' — it still has offers assigned to it.",
                 )
             else:
-                category_name = category.name
+                messages.success(request, f"Category '{category.name}' deleted.")
                 category.delete()
-                messages.success(request, f"Category '{category_name}' deleted.")
-            return redirect("commercials_offers_page")
 
         elif form_type == "add_offer":
             offer_form = OfferForm(request.POST, request.FILES)
@@ -71,7 +67,8 @@ def commercials_offers_page(request):
                 messages.success(request, "Offer created.")
             else:
                 messages.error(request, "Could not create offer — check the form.")
-            return redirect("commercials_offers_page")
+
+        return redirect("commercials_offers_page")
 
     offers = Offer.objects.select_related("category").prefetch_related("plans").all()
     categories = OfferCategory.objects.all().order_by("order")

@@ -38,12 +38,11 @@ def client_login(request):
         if user is not None:
             login(request, user)
             return redirect("client_dashboard_page", username=user.username)
-        else:
-            return render(
-                request,
-                "clients/client_login_page.html",
-                {"error": "Invalid credentials"},
-            )
+        return render(
+            request,
+            "clients/client_login_page.html",
+            {"error": "Invalid credentials"},
+        )
     return render(request, "clients/client_login_page.html")
 
 
@@ -52,6 +51,7 @@ def client_dashboard_page(request, username):
     user = get_object_or_404(User, username=username)
     if request.user != user:
         return redirect("client_dashboard_page", username=request.user.username)
+
     client = user.client_profile
     stores = client.locations.all().order_by("-created_at")
     form = StoreForm()
@@ -66,7 +66,6 @@ def client_dashboard_page(request, username):
             user.save()
             client.phone = request.POST.get("phone", "").strip()
             client.save()
-            return redirect("client_dashboard_page", username=username)
 
         elif form_type == "add_store":
             form = StoreForm(request.POST, request.FILES)
@@ -75,7 +74,6 @@ def client_dashboard_page(request, username):
                 store.client = client
                 store.status = Store.STATUS_PENDING
                 store.save()
-                return redirect("client_dashboard_page", username=username)
 
         elif form_type == "edit_store":
             store = get_object_or_404(
@@ -85,7 +83,8 @@ def client_dashboard_page(request, username):
             store.address_line1 = request.POST.get("address_line1", "").strip()
             store.phone = request.POST.get("phone", "").strip()
             store.save()
-            return redirect("client_dashboard_page", username=username)
+
+        return redirect("client_dashboard_page", username=username)
 
     active_stores = Store.objects.filter(
         client=client, status=Store.STATUS_APPROVED

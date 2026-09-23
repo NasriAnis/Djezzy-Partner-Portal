@@ -7,6 +7,7 @@
                 <div class="alert alert-info">{{ message }}</div>
             {% endfor %}
         {% endif %}
+
         {% if not store %}
             <p class="text-light">No store found on your account yet.</p>
         {% else %}
@@ -21,217 +22,269 @@
                     </select>
                 </form>
             {% endif %}
-            <h2 class="text-light mb-3">{{ store.name }}</h2>
-            <!-- ============ ACCEPTED ============ -->
-            <div class="card mb-2">
-                <div class="card-header p-0">
-                    <button class="btn btn-link text-light text-decoration-none w-100 text-start p-3"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#collapseAccepted">
-                        <i class="bi bi-check-circle-fill me-2"></i>
-                        Accepted ({{ accepted_items|length }})
+
+            <h2 class="text-light mb-4">{{ store.name }}</h2>
+
+            <style>
+                .nav-tabs .nav-link { color: #a0a0a0; }
+                .nav-tabs .nav-link.active {
+                    color: #fff;
+                    background-color: #212529;
+                    border-color: #495057 #495057 #212529;
+                }
+            </style>
+
+            <!-- MAIN TABS NAVIGATION -->
+            <ul class="nav nav-tabs border-secondary mb-3" id="draftsStockTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="accepted-tab" data-bs-toggle="tab" data-bs-target="#accepted-pane" type="button" role="tab" aria-controls="accepted-pane" aria-selected="true">
+                        <i class="bi bi-check-circle-fill me-2 text-success"></i>Accepted ({{ accepted_items|length }})
                     </button>
-                </div>
-                <div id="collapseAccepted" class="collapse">
-                    <div class="card-body">
-                        <table class="table table-dark table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Offer</th>
-                                    <th>Plan</th>
-                                    <th>Quantity</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for tx in accepted_items %}
-                                    <tr>
-                                        <td>{{ tx.plan.offer.title }}</td>
-                                        <td>{{ tx.plan.label }}</td>
-                                        <td>{{ tx.quantity_bought }}</td>
-                                        <td>{{ tx.updated_at|date:"Y-m-d H:i" }}</td>
-                                    </tr>
-                                {% empty %}
-                                    <tr>
-                                        <td colspan="4">Nothing accepted yet.</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-pane" type="button" role="tab" aria-controls="pending-pane" aria-selected="false">
+                        <i class="bi bi-hourglass-split me-2 text-warning"></i>Pending ({{ pending_items|length }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="waitlist-tab" data-bs-toggle="tab" data-bs-target="#waitlist-pane" type="button" role="tab" aria-controls="waitlist-pane" aria-selected="false">
+                        <i class="bi bi-clock-history me-2 text-info"></i>Waitlist ({{ waitlist_items|length }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="blocked-tab" data-bs-toggle="tab" data-bs-target="#blocked-pane" type="button" role="tab" aria-controls="blocked-pane" aria-selected="false">
+                        <i class="bi bi-x-circle-fill me-2 text-danger"></i>Blocked ({{ blocked_items|length }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="draft-tab" data-bs-toggle="tab" data-bs-target="#draft-pane" type="button" role="tab" aria-controls="draft-pane" aria-selected="false">
+                        <i class="bi bi-bookmark-fill me-2 text-secondary"></i>Draft ({{ draft_items|length }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="stock-tab" data-bs-toggle="tab" data-bs-target="#stock-pane" type="button" role="tab" aria-controls="stock-pane" aria-selected="false">
+                        <i class="bi bi-box-seam-fill me-2 text-primary"></i>Stock ({{ stock_list|length }})
+                    </button>
+                </li>
+            </ul>
+
+            <!-- TAB CONTENTS -->
+            <div class="tab-content" id="draftsStockTabsContent">
+
+                <!-- ============ ACCEPTED TAB ============ -->
+                <div class="tab-pane fade show active" id="accepted-pane" role="tabpanel" aria-labelledby="accepted-tab" tabindex="0">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Offer</th>
+                                            <th>Plan</th>
+                                            <th>Quantity</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for tx in accepted_items %}
+                                            <tr>
+                                                <td>{{ tx.plan.offer.title }}</td>
+                                                <td>{{ tx.plan.label }}</td>
+                                                <td>{{ tx.quantity_bought }}</td>
+                                                <td>{{ tx.updated_at|date:"Y-m-d H:i" }}</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="4" class="text-secondary">Nothing accepted yet.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <!-- ============ PENDING ============ -->
-            <div class="card mb-2">
-                <div class="card-header p-0">
-                    <button class="btn btn-link text-light text-decoration-none w-100 text-start p-3"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#collapsePending">
-                        <i class="bi bi-hourglass-split me-2"></i>
-                        Pending ({{ pending_items|length }})
-                    </button>
-                </div>
-                <div id="collapsePending" class="collapse">
-                    <div class="card-body">
-                        <table class="table table-dark table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Offer</th>
-                                    <th>Plan</th>
-                                    <th>Quantity</th>
-                                    <th>Requested</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for tx in pending_items %}
-                                    <tr>
-                                        <td>{{ tx.plan.offer.title }}</td>
-                                        <td>{{ tx.plan.label }}</td>
-                                        <td>{{ tx.quantity_bought }}</td>
-                                        <td>{{ tx.created_at|date:"Y-m-d H:i" }}</td>
-                                    </tr>
-                                {% empty %}
-                                    <tr>
-                                        <td colspan="4">No pending requests.</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+
+                <!-- ============ PENDING TAB ============ -->
+                <div class="tab-pane fade" id="pending-pane" role="tabpanel" aria-labelledby="pending-tab" tabindex="0">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Offer</th>
+                                            <th>Plan</th>
+                                            <th>Quantity</th>
+                                            <th>Requested</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for tx in pending_items %}
+                                            <tr>
+                                                <td>{{ tx.plan.offer.title }}</td>
+                                                <td>{{ tx.plan.label }}</td>
+                                                <td>{{ tx.quantity_bought }}</td>
+                                                <td>{{ tx.created_at|date:"Y-m-d H:i" }}</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="4" class="text-secondary">No pending requests.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <!-- ============ BLOCKED ============ -->
-            <div class="card mb-2">
-                <div class="card-header p-0">
-                    <button class="btn btn-link text-light text-decoration-none w-100 text-start p-3"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#collapseBlocked">
-                        <i class="bi bi-x-circle-fill me-2"></i>
-                        Blocked ({{ blocked_items|length }})
-                    </button>
-                </div>
-                <div id="collapseBlocked" class="collapse">
-                    <div class="card-body">
-                        <table class="table table-dark table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Offer</th>
-                                    <th>Plan</th>
-                                    <th>Quantity</th>
-                                    <th>Comment</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for tx in blocked_items %}
-                                    <tr>
-                                        <td>{{ tx.plan.offer.title }}</td>
-                                        <td>{{ tx.plan.label }}</td>
-                                        <td>{{ tx.quantity_bought }}</td>
-                                        <td>{{ tx.comment|default:"—" }}</td>
-                                    </tr>
-                                {% empty %}
-                                    <tr>
-                                        <td colspan="4">Nothing blocked.</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+
+                <!-- ============ WAITLIST TAB ============ -->
+                <div class="tab-pane fade" id="waitlist-pane" role="tabpanel" aria-labelledby="waitlist-tab" tabindex="0">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Offer</th>
+                                            <th>Plan</th>
+                                            <th>Quantity</th>
+                                            <th>Date Added</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for tx in waitlist_items %}
+                                            <tr>
+                                                <td>{{ tx.plan.offer.title }}</td>
+                                                <td>{{ tx.plan.label }}</td>
+                                                <td>{{ tx.quantity_bought }}</td>
+                                                <td>{{ tx.created_at|date:"Y-m-d H:i" }}</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="4" class="text-secondary">No items on waitlist.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <!-- ============ DRAFT ============ -->
-            <div class="card mb-2">
-                <div class="card-header p-0">
-                    <button class="btn btn-link text-light text-decoration-none w-100 text-start p-3"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#collapseDraft">
-                        <i class="bi bi-bookmark-fill me-2"></i>
-                        Draft ({{ draft_items|length }})
-                    </button>
-                </div>
-                <div id="collapseDraft" class="collapse">
-                    <div class="card-body">
-                        <table class="table table-dark table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Offer</th>
-                                    <th>Plan</th>
-                                    <th>Quantity</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for tx in draft_items %}
-                                    <tr>
-                                        <td>{{ tx.plan.offer.title }}</td>
-                                        <td>{{ tx.plan.label }}</td>
-                                        <td>{{ tx.quantity_bought }}</td>
-                                        <td>
-                                            <form method="post" class="m-0">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="action" value="submit_draft">
-                                                <input type="hidden" name="store_id" value="{{ store.id }}">
-                                                <input type="hidden" name="tx_id" value="{{ tx.id }}">
-                                                <button type="submit"
-                                                        class="btn btn-sm btn-primary">Move to Pending</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                {% empty %}
-                                    <tr>
-                                        <td colspan="4">No drafts saved.</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+
+                <!-- ============ BLOCKED TAB ============ -->
+                <div class="tab-pane fade" id="blocked-pane" role="tabpanel" aria-labelledby="blocked-tab" tabindex="0">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Offer</th>
+                                            <th>Plan</th>
+                                            <th>Quantity</th>
+                                            <th>Comment</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for tx in blocked_items %}
+                                            <tr>
+                                                <td>{{ tx.plan.offer.title }}</td>
+                                                <td>{{ tx.plan.label }}</td>
+                                                <td>{{ tx.quantity_bought }}</td>
+                                                <td>{{ tx.comment|default:"—" }}</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="4" class="text-secondary">Nothing blocked.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <!-- ============ STOCK ============ -->
-            <div class="card mb-2">
-                <div class="card-header p-0">
-                    <button class="btn btn-link text-light text-decoration-none w-100 text-start p-3"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#collapseStock">
-                        <i class="bi bi-box-seam-fill me-2"></i>
-                        Stock ({{ stock_list|length }})
-                    </button>
-                </div>
-                <div id="collapseStock" class="collapse">
-                    <div class="card-body">
-                        <table class="table table-dark table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Offer</th>
-                                    <th>Plan</th>
-                                    <th>Bought</th>
-                                    <th>Sold</th>
-                                    <th>Remaining</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for s in stock_list %}
-                                    <tr>
-                                        <td>{{ s.plan.offer.title }}</td>
-                                        <td>{{ s.plan.label }}</td>
-                                        <td>{{ s.stock }}</td>
-                                        <td>{{ s.sold }}</td>
-                                        <td>{{ s.remaining }}</td>
-                                    </tr>
-                                {% empty %}
-                                    <tr>
-                                        <td colspan="5">No stock yet.</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+
+                <!-- ============ DRAFT TAB ============ -->
+                <div class="tab-pane fade" id="draft-pane" role="tabpanel" aria-labelledby="draft-tab" tabindex="0">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Offer</th>
+                                            <th>Plan</th>
+                                            <th>Quantity</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for tx in draft_items %}
+                                            <tr>
+                                                <td>{{ tx.plan.offer.title }}</td>
+                                                <td>{{ tx.plan.label }}</td>
+                                                <td>{{ tx.quantity_bought }}</td>
+                                                <td>
+                                                    <form method="post" class="m-0">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="action" value="submit_draft">
+                                                        <input type="hidden" name="store_id" value="{{ store.id }}">
+                                                        <input type="hidden" name="tx_id" value="{{ tx.id }}">
+                                                        <button type="submit" class="btn btn-sm btn-primary">Move to Pending</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="4" class="text-secondary">No drafts saved.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- ============ STOCK TAB ============ -->
+                <div class="tab-pane fade" id="stock-pane" role="tabpanel" aria-labelledby="stock-tab" tabindex="0">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Offer</th>
+                                            <th>Plan</th>
+                                            <th>Bought</th>
+                                            <th>Sold</th>
+                                            <th>Remaining</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for s in stock_list %}
+                                            <tr>
+                                                <td>{{ s.plan.offer.title }}</td>
+                                                <td>{{ s.plan.label }}</td>
+                                                <td>{{ s.stock }}</td>
+                                                <td>{{ s.sold }}</td>
+                                                <td>{{ s.remaining }}</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="5" class="text-secondary">No stock yet.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         {% endif %}
     </div>

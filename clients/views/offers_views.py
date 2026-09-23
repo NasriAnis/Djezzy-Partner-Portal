@@ -34,10 +34,8 @@ def client_offer_manage_page(request):
         )
 
     store_id = request.GET.get("store") or request.POST.get("store_id_selected")
-    store = None
-    if store_id:
-        store = stores.filter(id=store_id).first()
-    if store is None:
+    store = stores.filter(id=store_id).first() if store_id else stores.first()
+    if not store:
         store = stores.first()
 
     if request.method == "POST":
@@ -115,10 +113,8 @@ def client_offer_draft_and_stock_page(request):
         )
 
     store_id = request.GET.get("store") or request.POST.get("store_id")
-    store = None
-    if store_id:
-        store = stores.filter(id=store_id).first()
-    if store is None:
+    store = stores.filter(id=store_id).first() if store_id else stores.first()
+    if not store:
         store = stores.first()
 
     if request.method == "POST" and request.POST.get("action") == "submit_draft":
@@ -156,35 +152,31 @@ def client_offer_draft_and_stock_page(request):
         "plan__offer"
     )
 
-    draft_items = transactions_qs.filter(
-        status=StoreOfferTransaction.STATUS_DRAFT
-    ).order_by("-created_at")
-    pending_items = transactions_qs.filter(
-        status=StoreOfferTransaction.STATUS_PENDING
-    ).order_by("-created_at")
-    accepted_items = transactions_qs.filter(
-        status=StoreOfferTransaction.STATUS_APPROVED
-    ).order_by("-created_at")
-    blocked_items = transactions_qs.filter(
-        status=StoreOfferTransaction.STATUS_BLOCKED
-    ).order_by("-created_at")
-
-    stock_qs = (
-        StoreStock.objects.filter(store=store)
-        .select_related("plan__offer")
-        .order_by("plan__offer__title", "plan__label")
-    )
-
     return render(
         request,
         "clients/client_offer_draft_and_stock_page.html",
         {
             "store": store,
             "stores": stores,
-            "draft_items": draft_items,
-            "pending_items": pending_items,
-            "accepted_items": accepted_items,
-            "blocked_items": blocked_items,
-            "stock_list": stock_qs,
+            "waitlist_items": transactions_qs.filter(
+                status=StoreOfferTransaction.STATUS_WAITLISTED
+            ).order_by("-created_at"),
+            "draft_items": transactions_qs.filter(
+                status=StoreOfferTransaction.STATUS_DRAFT
+            ).order_by("-created_at"),
+            "pending_items": transactions_qs.filter(
+                status=StoreOfferTransaction.STATUS_PENDING
+            ).order_by("-created_at"),
+            "accepted_items": transactions_qs.filter(
+                status=StoreOfferTransaction.STATUS_APPROVED
+            ).order_by("-created_at"),
+            "blocked_items": transactions_qs.filter(
+                status=StoreOfferTransaction.STATUS_BLOCKED
+            ).order_by("-created_at"),
+            "stock_list": (
+                StoreStock.objects.filter(store=store)
+                .select_related("plan__offer")
+                .order_by("plan__offer__title", "plan__label")
+            ),
         },
     )
