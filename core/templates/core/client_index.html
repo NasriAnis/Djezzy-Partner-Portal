@@ -21,7 +21,12 @@
                 <div class="col-12 col-md-6 col-lg-4">
                     <a href="{% url 'offer_detail_page' offer.slug %}"
                        class="text-decoration-none">
-                        <div class="card card-hover h-100 overflow-hidden">
+                        <div class="card card-hover h-100 overflow-hidden position-relative">
+                            {% if offer.is_new %}
+                                <span class="position-absolute top-0 end-0 badge rounded-pill bg-danger m-3 shadow-sm px-2 py-1 uppercase"
+                                      style="z-index: 2;
+                                             font-size: 0.75rem">NEW</span>
+                            {% endif %}
                             {% if offer.image %}
                                 <img src="{{ offer.image.url }}"
                                      class="card-img-top"
