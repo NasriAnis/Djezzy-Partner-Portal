@@ -21,90 +21,130 @@
                     </select>
                 </form>
             {% endif %}
-            <h3 class="text-light">Sell an Offer</h3>
-            <form method="post" class="row g-2 align-items-end">
-                {% csrf_token %}
-                <input type="hidden" name="store_id_selected" value="{{ store.id }}">
-                <div class="col-md-5">
-                    <label class="text-light">Offer / Plan</label>
-                    <select name="plan_id" class="form-select" required>
-                        <option value="">Select</option>
-                        {% for s in stock_list %}
-                            {% if s.remaining > 0 %}
-                                <option value="{{ s.plan.id }}">{{ s.plan.offer.title }} — {{ s.plan.label }} ({{ s.remaining }} left)</option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
+            <!-- Sell an Offer Card -->
+            <div class="card bg-dark text-light border-secondary mb-4">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Sell an Offer</h4>
+                    <form method="post" class="row g-3 align-items-end">
+                        {% csrf_token %}
+                        <input type="hidden" name="store_id_selected" value="{{ store.id }}">
+                        <div class="col-md-5">
+                            <label class="form-label text-light">Offer / Plan</label>
+                            <select name="plan_id" class="form-select" required>
+                                <option value="">Select</option>
+                                {% for s in stock_list %}
+                                    {% if s.remaining > 0 %}
+                                        <option value="{{ s.plan.id }}">{{ s.plan.offer.title }} — {{ s.plan.label }} ({{ s.remaining }} left)</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-light">Client phone number</label>
+                            <input type="text" name="phone_number" class="form-control" required>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100">Sell</button>
+                        </div>
+                    </form>
+                    {% if form.errors %}
+                        <div class="mt-3">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
-                <div class="col-md-4">
-                    <label class="text-light">Client phone number</label>
-                    <input type="text" name="phone_number" class="form-control" required>
+            </div>
+            <!-- Collapsible Stock Table Card (Closed by default) -->
+            <div class="card bg-dark text-light border-secondary mb-4">
+                <div class="card-header border-secondary d-flex justify-content-between align-items-center bg-transparent py-3">
+                    <h4 class="card-title mb-0">{{ store.name }} — Stock</h4>
+                    <button class="btn btn-outline-light btn-sm collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#stockCollapse"
+                            aria-expanded="false"
+                            aria-controls="stockCollapse">Toggle Stock</button>
                 </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary w-100">Sell</button>
+                <div class="collapse" id="stockCollapse">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Offer</th>
+                                        <th>Plan</th>
+                                        <th>Bought</th>
+                                        <th>Sold</th>
+                                        <th>Remaining</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for s in stock_list %}
+                                        <tr>
+                                            <td>{{ s.plan.offer.title }}</td>
+                                            <td>{{ s.plan.label }}</td>
+                                            <td>{{ s.stock }}</td>
+                                            <td>{{ s.sold }}</td>
+                                            <td>{{ s.remaining }}</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="5"
+                                                class="text-secondary">No stock yet — buy an offer first.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </form>
-            <h3 class="text-light mt-4">{{ store.name }} — Stock</h3>
-            <table class="table table-dark table-striped">
-                <thead>
-                    <tr>
-                        <th>Offer</th>
-                        <th>Plan</th>
-                        <th>Bought</th>
-                        <th>Sold</th>
-                        <th>Remaining</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for s in stock_list %}
-                        <tr>
-                            <td>{{ s.plan.offer.title }}</td>
-                            <td>{{ s.plan.label }}</td>
-                            <td>{{ s.stock }}</td>
-                            <td>{{ s.sold }}</td>
-                            <td>{{ s.remaining }}</td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="5">No stock yet — buy an offer first.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% if form.errors %}
-                <div class="mt-2">
-                    {% for field, errors in form.errors.items %}
-                        {% for error in errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-                    {% endfor %}
+            </div>
+            <!-- Collapsible Sale History Card (Closed by default) -->
+            <div class="card bg-dark text-light border-secondary mb-4">
+                <div class="card-header border-secondary d-flex justify-content-between align-items-center bg-transparent py-3">
+                    <h4 class="card-title mb-0">Sale History</h4>
+                    <button class="btn btn-outline-light btn-sm collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#salesCollapse"
+                            aria-expanded="false"
+                            aria-controls="salesCollapse">Toggle History</button>
                 </div>
-            {% endif %}
-            <h3 class="text-light mt-4">Sale History</h3>
-            <table class="table table-dark table-striped">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Offer</th>
-                        <th>Plan</th>
-                        <th>Phone</th>
-                        <th>Sold by</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for sale in sales %}
-                        <tr>
-                            <td>{{ sale.created_at|date:"Y-m-d H:i" }}</td>
-                            <td>{{ sale.plan.offer.title }}</td>
-                            <td>{{ sale.plan.label }}</td>
-                            <td>{{ sale.phone_number }}</td>
-                            <td>{{ sale.sold_by }}</td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="5">No sales yet.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                <div class="collapse" id="salesCollapse">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Offer</th>
+                                        <th>Plan</th>
+                                        <th>Phone</th>
+                                        <th>Sold by</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for sale in sales %}
+                                        <tr>
+                                            <td>{{ sale.created_at|date:"Y-m-d H:i" }}</td>
+                                            <td>{{ sale.plan.offer.title }}</td>
+                                            <td>{{ sale.plan.label }}</td>
+                                            <td>{{ sale.phone_number }}</td>
+                                            <td>{{ sale.sold_by }}</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-secondary">No sales yet.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         {% endif %}
     </div>
 {% endblock %}
