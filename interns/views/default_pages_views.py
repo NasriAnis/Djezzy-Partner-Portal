@@ -1,6 +1,8 @@
 import json
 from datetime import timedelta
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
@@ -13,6 +15,38 @@ from core.models import Offer
 from clients.models import Client, Store, StoreOfferTransaction, WILAYA_CHOICES
 
 from .utils_views import commercial_required
+
+# Wilaya boundary polygons used to draw the store-density choropleth on the
+# dashboard map. Expected at <project root>/geo.json.
+GEOJSON_PATH = Path(settings.BASE_DIR) / "wilayas_geo.json"
+
+with open(GEOJSON_PATH, encoding="utf-8") as _f:
+    _WILAYA_GEOJSON = json.load(_f)
+
+# The 10 wilayas created in the 2019 split (49-58) don't carry a
+# "city_code" property in the source file, so they're matched by name
+# instead. Adjust the codes here if WILAYA_CHOICES uses different ones.
+NEW_WILAYA_CODES_BY_NAME = {
+    "Timimoune": "49",
+    "Bordj Badji Mokhtar": "50",
+    "Ouled Djellal": "51",
+    "Béni Abbès": "52",
+    "In Salah": "53",
+    "In Guezzam": "54",
+    "Touggourt": "55",
+    "Djanet": "56",
+    "El M'Ghair": "57",
+    "El Menia": "58",
+}
+
+
+def _feature_wilaya_code(feature):
+    """Return the zero-padded wilaya code (e.g. "01") for a geojson feature."""
+    props = feature["properties"]
+    code = props.get("city_code")
+    if code not in (None, ""):
+        return str(code).zfill(2)
+    return NEW_WILAYA_CODES_BY_NAME.get(props.get("name"))
 
 # Approximate wilaya-capital coordinates, used to position the density map
 # bubbles. These are centroids, not administrative boundaries.
@@ -149,8 +183,6 @@ def commercials_dashboard_page(request):
             "store_count": row["store_count"],
             "offers_sold": 0,
             "revenue": 0.0,
-            "lat": WILAYA_COORDS.get(code, (None, None))[0],
-            "lng": WILAYA_COORDS.get(code, (None, None))[1],
         }
     for row in sales_by_wilaya_qs:
         code = row["store__wilaya"]
@@ -162,18 +194,34 @@ def commercials_dashboard_page(request):
                 "store_count": 0,
                 "offers_sold": 0,
                 "revenue": 0.0,
-                "lat": WILAYA_COORDS.get(code, (None, None))[0],
-                "lng": WILAYA_COORDS.get(code, (None, None))[1],
             },
         )
         entry["offers_sold"] = row["offers_sold"] or 0
         entry["revenue"] = float(row["revenue"] or 0)
 
-    wilaya_list = sorted(
-        (w for w in wilaya_stats.values() if w["lat"] is not None),
-        key=lambda w: w["revenue"],
-        reverse=True,
-    )
+    wilaya_list = sorted(wilaya_stats.values(), key=lambda w: w["revenue"], reverse=True)
+
+    # --- Choropleth: merge store/offer/revenue stats onto the wilaya
+    # boundary polygons so the map can color each wilaya by store density.
+    choropleth_features = []
+    for feature in _WILAYA_GEOJSON["features"]:
+        code = _feature_wilaya_code(feature)
+        stats = wilaya_stats.get(code)
+        choropleth_features.append(
+            {
+                "type": "Feature",
+                "properties": {
+                    "name": feature["properties"].get("name"),
+                    "code": code,
+                    "store_count": stats["store_count"] if stats else 0,
+                    "offers_sold": stats["offers_sold"] if stats else 0,
+                    "revenue": stats["revenue"] if stats else 0.0,
+                },
+                "geometry": feature["geometry"],
+            }
+        )
+    wilaya_geojson = {"type": "FeatureCollection", "features": choropleth_features}
+    max_store_count = max((f["properties"]["store_count"] for f in choropleth_features), default=0)
 
     context = {
         "offers_count": Offer.objects.count(),
@@ -183,6 +231,7 @@ def commercials_dashboard_page(request):
         "monthly_labels_json": json.dumps(monthly_labels),
         "monthly_sold_json": json.dumps(monthly_sold),
         "monthly_revenue_json": json.dumps(monthly_revenue),
-        "wilaya_data_json": json.dumps(wilaya_list, cls=DjangoJSONEncoder),
+        "wilaya_geojson_json": json.dumps(wilaya_geojson, cls=DjangoJSONEncoder),
+        "max_store_count": max_store_count,
     }
     return render(request, "interns/commercials_dashboard_page.html", context)
