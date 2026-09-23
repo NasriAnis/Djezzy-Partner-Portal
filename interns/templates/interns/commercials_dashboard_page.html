@@ -1,6 +1,14 @@
 {% extends "interns/interns_base.html" %}
 {% block title %}Dashboard{% endblock %}
+
 {% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .chart-card { min-height: 320px; }
+    #wilayaMap { height: 420px; width: 100%; border-radius: 0.5rem; }
+    .leaflet-popup-content-wrapper { background: #1f1f1f; color: #eee; }
+    .leaflet-popup-tip { background: #1f1f1f; }
+</style>
     <h1 class="mb-4">Dashboard</h1>
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
@@ -28,33 +36,173 @@
             </div>
         </div>
     </div>
-    <h5 class="mb-3">Recently Added Stores</h5>
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-dark table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Store</th>
-                        <th>Client</th>
-                        <th>Wilaya</th>
-                        <th>Created</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for store in recent_stores %}
-                        <tr>
-                            <td>{{ store.name }}</td>
-                            <td>{{ store.client.user.get_full_name|default:store.client.user.username }}</td>
-                            <td>{{ store.get_wilaya_display }}</td>
-                            <td>{{ store.created_at|date:"d M Y" }}</td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-secondary">No stores yet.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+    <!-- Monthly offers sold / revenue -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="card chart-card">
+                <div class="card-body">
+                    <h6 class="mb-3">Offers Sold (last 6 months)</h6>
+                    <canvas id="offersSoldChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card chart-card">
+                <div class="card-body">
+                    <h6 class="mb-3">Revenue in DA (last 6 months)</h6>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Store density / regional sales map -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="mb-3">Store Density &amp; Sales by Wilaya</h6>
+                    <p class="text-secondary small mb-3">
+                        Bubble size = number of stores in the wilaya. Click a bubble for offers sold and revenue.
+                    </p>
+                    <div id="wilayaMap"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Per-region breakdown table -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="mb-3">Per-Region Breakdown</h6>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Wilaya</th>
+                                    <th>Stores</th>
+                                    <th>Offers Sold</th>
+                                    <th>Revenue (DA)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for w in wilaya_stats %}
+                                    <tr>
+                                        <td>{{ w.name }}</td>
+                                        <td>{{ w.store_count }}</td>
+                                        <td>{{ w.offers_sold }}</td>
+                                        <td>{{ w.revenue|floatformat:2 }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-secondary">No sales data yet.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const monthlyLabels = {{ monthly_labels_json|safe }};
+    const monthlySold = {{ monthly_sold_json|safe }};
+    const monthlyRevenue = {{ monthly_revenue_json|safe }};
+    const wilayaData = {{ wilaya_data_json|safe }};
+
+    // --- Offers sold chart ---
+    new Chart(document.getElementById("offersSoldChart"), {
+        type: "bar",
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: "Offers sold",
+                data: monthlySold,
+                backgroundColor: "rgba(54, 162, 235, 0.7)",
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } },
+            },
+        },
+    });
+
+    // --- Revenue chart ---
+    new Chart(document.getElementById("revenueChart"), {
+        type: "line",
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: "Revenue (DA)",
+                data: monthlyRevenue,
+                borderColor: "rgba(75, 192, 100, 1)",
+                backgroundColor: "rgba(75, 192, 100, 0.2)",
+                tension: 0.3,
+                fill: true,
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } },
+        },
+    });
+
+    // --- Wilaya density map ---
+    if (wilayaData.length) {
+        const map = L.map("wilayaMap").setView([28.0, 2.5], 5);
+        L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+            attribution: "Tiles &copy; Esri",
+            maxZoom: 16,
+        }).addTo(map);
+
+        const maxStores = Math.max(...wilayaData.map((w) => w.store_count), 1);
+
+        // Heat layer: intensity/spread reflects store density, colored in
+        // green shades only (brighter/denser green = more stores).
+        const heatPoints = wilayaData.map((w) => [w.lat, w.lng, w.store_count / maxStores]);
+        L.heatLayer(heatPoints, {
+            radius: 55,
+            blur: 40,
+            maxZoom: 8,
+            max: 1,
+            gradient: {
+                0.1: "rgba(20, 60, 30, 0.35)",
+                0.3: "#14532d",
+                0.5: "#16a34a",
+                0.75: "#4ade80",
+                1.0: "#bbf7d0",
+            },
+        }).addTo(map);
+
+        // Invisible click targets on top of the heat layer so popups still work.
+        wilayaData.forEach((w) => {
+            const marker = L.circleMarker([w.lat, w.lng], {
+                radius: 14,
+                opacity: 0,
+                fillOpacity: 0,
+                interactive: true,
+            }).addTo(map);
+
+            marker.bindPopup(
+                `<strong>${w.name}</strong><br>` +
+                `Stores: ${w.store_count}<br>` +
+                `Offers sold: ${w.offers_sold}<br>` +
+                `Revenue: ${w.revenue.toLocaleString()} DA`
+            );
+        });
+    }
+});
+</script>
 {% endblock %}

@@ -5,227 +5,396 @@
        class="btn btn-outline-light btn-sm mb-3">← Back to Clients</a>
     <h1 class="mb-1">{{ client.user.get_full_name|default:client.user.username }}</h1>
     <p class="text-secondary mb-4">{{ client.user.email }} · {{ client.phone|default:"—" }}</p>
-    <h5 class="mb-3">Stores</h5>
-    <div class="card mb-4">
-        <div class="table-responsive">
-            <table class="table table-dark table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Wilaya</th>
-                        <th>Commune</th>
-                        <th>Created</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for store in stores %}
-                        {% if store.status == "approved" %}
-                            <tr>
-                                <td>{{ store.name }}</td>
-                                <td>{{ store.get_wilaya_display }}</td>
-                                <td>{{ store.comune.name }}</td>
-                                <td>{{ store.created_at|date:"d M Y" }}</td>
-                                <td>
-                                    <span class="badge bg-success">Active</span>
-                                </td>
-                                <td>
-                                    <a href="{% url 'commercials_store_detail_page' store.id %}"
-                                       class="btn btn-sm btn-outline-light">View</a>
-                                </td>
-                            </tr>
-                        {% endif %}
-                    {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-secondary">No stores yet.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+    <style>
+        .chart-card { min-height: 300px; }
+    </style>
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="card chart-card">
+                <div class="card-body">
+                    <h6 class="mb-3">Offers Bought (last 6 months)</h6>
+                    <canvas id="offersBoughtChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card chart-card">
+                <div class="card-body">
+                    <h6 class="mb-3">Amount Spent in DA (last 6 months)</h6>
+                    <canvas id="spentChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
-    <h5 class="mb-3">Pending Stores</h5>
-    <div class="card mb-4">
-        <div class="table-responsive">
-            <table class="table table-dark table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Wilaya</th>
-                        <th>Commune</th>
-                        <th>Created</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for store in stores %}
-                        {% if store.status == "pending" %}
+
+    <!-- ============ STORES ============ -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center"
+             style="cursor: pointer"
+             data-bs-toggle="collapse"
+             data-bs-target="#collapseStores"
+             aria-expanded="true"
+             aria-controls="collapseStores">
+            <span class="fw-semibold">Stores</span>
+            <span class="text-secondary">▾</span>
+        </div>
+        <div class="collapse show" id="collapseStores">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead>
                             <tr>
-                                <td>{{ store.name }}</td>
-                                <td>{{ store.get_wilaya_display }}</td>
-                                <td>{{ store.comune.name }}</td>
-                                <td>{{ store.created_at|date:"d M Y" }}</td>
-                                <td>
-                                    <span class="badge bg-warning">Pending</span>
-                                </td>
-                                <td>
-                                    <a href="{% url 'commercials_store_detail_page' store.id %}"
-                                       class="btn btn-sm btn-outline-light">View</a>
-                                </td>
+                                <th>Name</th>
+                                <th>Wilaya</th>
+                                <th>Commune</th>
+                                <th>Created</th>
+                                <th>Status</th>
+                                <th></th>
                             </tr>
-                        {% endif %}
-                    {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-secondary">No stores yet.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        </thead>
+                        <tbody>
+                            {% for store in stores %}
+                                {% if store.status == "approved" %}
+                                    <tr>
+                                        <td>{{ store.name }}</td>
+                                        <td>{{ store.get_wilaya_display }}</td>
+                                        <td>{{ store.comune.name }}</td>
+                                        <td>{{ store.created_at|date:"d M Y" }}</td>
+                                        <td>
+                                            <span class="badge bg-success">Active</span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'commercials_store_detail_page' store.id %}"
+                                               class="btn btn-sm btn-outline-light">View</a>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-secondary">No stores yet.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-    <h5 class="mb-3">Blocked Stores History</h5>
-    <div class="card mb-4">
-        <div class="table-responsive">
-            <table class="table table-dark table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Wilaya</th>
-                        <th>Commune</th>
-                        <th>Created</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for store in stores %}
-                        {% if store.status == "blocked" %}
+
+    <!-- ============ PENDING STORES ============ -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center"
+             style="cursor: pointer"
+             data-bs-toggle="collapse"
+             data-bs-target="#collapsePendingStores"
+             aria-expanded="false"
+             aria-controls="collapsePendingStores">
+            <span class="fw-semibold">Pending Stores</span>
+            <span class="text-secondary">▾</span>
+        </div>
+        <div class="collapse" id="collapsePendingStores">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead>
                             <tr>
-                                <td>{{ store.name }}</td>
-                                <td>{{ store.get_wilaya_display }}</td>
-                                <td>{{ store.comune.name }}</td>
-                                <td>{{ store.created_at|date:"d M Y" }}</td>
-                                <td>
-                                    <span class="badge bg-danger">Blocked</span>
-                                </td>
-                                <td>
-                                    <a href="{% url 'commercials_store_detail_page' store.id %}"
-                                       class="btn btn-sm btn-outline-light">View</a>
-                                </td>
+                                <th>Name</th>
+                                <th>Wilaya</th>
+                                <th>Commune</th>
+                                <th>Created</th>
+                                <th>Status</th>
+                                <th></th>
                             </tr>
-                        {% endif %}
-                    {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-secondary">No blocked stores.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        </thead>
+                        <tbody>
+                            {% for store in stores %}
+                                {% if store.status == "pending" %}
+                                    <tr>
+                                        <td>{{ store.name }}</td>
+                                        <td>{{ store.get_wilaya_display }}</td>
+                                        <td>{{ store.comune.name }}</td>
+                                        <td>{{ store.created_at|date:"d M Y" }}</td>
+                                        <td>
+                                            <span class="badge bg-warning">Pending</span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'commercials_store_detail_page' store.id %}"
+                                               class="btn btn-sm btn-outline-light">View</a>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-secondary">No stores yet.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-    <h5 class="mb-3">Purchase History</h5>
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-dark table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Store</th>
-                        <th>Offer / Plan</th>
-                        <th>Bought</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for t in transactions %}
-                        <tr>
-                            <td>{{ t.store.name }}</td>
-                            <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
-                            <td>{{ t.quantity_bought }}</td>
-                            <td>{{ t.created_at|date:"d M Y" }}</td>
-                            {% if t.status == "approved" %}
-                                <td>
-                                    <span class="badge bg-success">Approved</span>
-                                </td>
-                                <td>
-                                    <button type="button"
-                                            class="btn btn-sm btn-danger"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#denyModal{{ t.id }}">Deny</button>
-                                </td>
-                            {% elif t.status == "blocked" %}
-                                <td>
-                                    <span class="badge bg-danger">Blocked</span>
-                                </td>
-                                <td>
-                                    <form method="post"
-                                          action="{% url 'commercials_approve_transaction' t.id %}"
-                                          class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
-                                    </form>
-                                </td>
-                            {% else %}
-                                <td>
-                                    <span class="badge bg-warning">Pending</span>
-                                </td>
-                                <td>
-                                    <form method="post"
-                                          action="{% url 'commercials_approve_transaction' t.id %}"
-                                          class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
-                                    </form>
-                                    <button type="button"
-                                            class="btn btn-sm btn-danger"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#denyModal{{ t.id }}">Deny</button>
-                                </td>
-                            {% endif %}
-                        </tr>
-                        <!-- Deny Transaction Modal -->
-                        <div class="modal fade"
-                             id="denyModal{{ t.id }}"
-                             tabindex="-1"
-                             aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <form method="post" action="{% url 'commercials_deny_transaction' t.id %}">
-                                        {% csrf_token %}
-                                        <div class="modal-header border-secondary">
-                                            <h5 class="modal-title">Deny Transaction</h5>
+
+    <!-- ============ BLOCKED STORES HISTORY ============ -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center"
+             style="cursor: pointer"
+             data-bs-toggle="collapse"
+             data-bs-target="#collapseBlockedStores"
+             aria-expanded="false"
+             aria-controls="collapseBlockedStores">
+            <span class="fw-semibold">Blocked Stores History</span>
+            <span class="text-secondary">▾</span>
+        </div>
+        <div class="collapse" id="collapseBlockedStores">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Wilaya</th>
+                                <th>Commune</th>
+                                <th>Created</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for store in stores %}
+                                {% if store.status == "blocked" %}
+                                    <tr>
+                                        <td>{{ store.name }}</td>
+                                        <td>{{ store.get_wilaya_display }}</td>
+                                        <td>{{ store.comune.name }}</td>
+                                        <td>{{ store.created_at|date:"d M Y" }}</td>
+                                        <td>
+                                            <span class="badge bg-danger">Blocked</span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'commercials_store_detail_page' store.id %}"
+                                               class="btn btn-sm btn-outline-light">View</a>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-secondary">No blocked stores.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ CURRENT STOCK ============ -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center"
+             style="cursor: pointer"
+             data-bs-toggle="collapse"
+             data-bs-target="#collapseStock"
+             aria-expanded="false"
+             aria-controls="collapseStock">
+            <span class="fw-semibold">Current Stock</span>
+            <span class="text-secondary">▾</span>
+        </div>
+        <div class="collapse" id="collapseStock">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Store</th>
+                                <th>Offer / Plan</th>
+                                <th>Stock</th>
+                                <th>Sold</th>
+                                <th>Remaining</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in stock %}
+                                <tr>
+                                    <td>{{ s.store.name }}</td>
+                                    <td>{{ s.plan.offer.title }} — {{ s.plan.label }}</td>
+                                    <td>{{ s.stock }}</td>
+                                    <td>{{ s.sold }}</td>
+                                    <td>{{ s.remaining }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-secondary">No stock yet.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ PURCHASE HISTORY ============ -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center"
+             style="cursor: pointer"
+             data-bs-toggle="collapse"
+             data-bs-target="#collapsePurchaseHistory"
+             aria-expanded="false"
+             aria-controls="collapsePurchaseHistory">
+            <span class="fw-semibold">Purchase History</span>
+            <span class="text-secondary">▾</span>
+        </div>
+        <div class="collapse" id="collapsePurchaseHistory">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Store</th>
+                                <th>Offer / Plan</th>
+                                <th>Bought</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in transactions %}
+                                <tr>
+                                    <td>{{ t.store.name }}</td>
+                                    <td>{{ t.plan.offer.title }} — {{ t.plan.label }}</td>
+                                    <td>{{ t.quantity_bought }}</td>
+                                    <td>{{ t.created_at|date:"d M Y" }}</td>
+                                    {% if t.status == "approved" %}
+                                        <td>
+                                            <span class="badge bg-success">Approved</span>
+                                        </td>
+                                        <td>
                                             <button type="button"
-                                                    class="btn-close btn-close-white"
-                                                    data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <label for="deny_reason{{ t.id }}" class="form-label">Reason</label>
-                                            <textarea name="reason"
-                                                      id="deny_reason{{ t.id }}"
-                                                      class="form-control"
-                                                      required
-                                                      placeholder="Write the reason..."></textarea>
-                                        </div>
-                                        <div class="modal-footer border-secondary">
+                                                    class="btn btn-sm btn-danger"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#denyModal{{ t.id }}">Deny</button>
+                                        </td>
+                                    {% elif t.status == "blocked" %}
+                                        <td>
+                                            <span class="badge bg-danger">Blocked</span>
+                                        </td>
+                                        <td>
+                                            <form method="post"
+                                                  action="{% url 'commercials_approve_transaction' t.id %}"
+                                                  class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                            </form>
+                                        </td>
+                                    {% else %}
+                                        <td>
+                                            <span class="badge bg-warning">Pending</span>
+                                        </td>
+                                        <td>
+                                            <form method="post"
+                                                  action="{% url 'commercials_approve_transaction' t.id %}"
+                                                  class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                            </form>
                                             <button type="button"
-                                                    class="btn btn-outline-light"
-                                                    data-bs-dismiss="modal">Cancel</button>
-                                            <button type="submit" class="btn btn-danger">Confirm Deny</button>
+                                                    class="btn btn-sm btn-danger"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#denyModal{{ t.id }}">Deny</button>
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                                <!-- Deny Transaction Modal -->
+                                <div class="modal fade"
+                                     id="denyModal{{ t.id }}"
+                                     tabindex="-1"
+                                     aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form method="post" action="{% url 'commercials_deny_transaction' t.id %}">
+                                                {% csrf_token %}
+                                                <div class="modal-header border-secondary">
+                                                    <h5 class="modal-title">Deny Transaction</h5>
+                                                    <button type="button"
+                                                            class="btn-close btn-close-white"
+                                                            data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <label for="deny_reason{{ t.id }}" class="form-label">Reason</label>
+                                                    <textarea name="reason"
+                                                              id="deny_reason{{ t.id }}"
+                                                              class="form-control"
+                                                              required
+                                                              placeholder="Write the reason..."></textarea>
+                                                </div>
+                                                <div class="modal-footer border-secondary">
+                                                    <button type="button"
+                                                            class="btn btn-outline-light"
+                                                            data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-danger">Confirm Deny</button>
+                                                </div>
+                                            </form>
                                         </div>
-                                    </form>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-secondary">No transactions yet.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-secondary">No transactions yet.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const monthlyLabels = {{ monthly_labels_json|safe }};
+    const monthlyBought = {{ monthly_bought_json|safe }};
+    const monthlySpent = {{ monthly_spent_json|safe }};
+
+    new Chart(document.getElementById("offersBoughtChart"), {
+        type: "bar",
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: "Offers bought",
+                data: monthlyBought,
+                backgroundColor: "rgba(54, 162, 235, 0.7)",
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        },
+    });
+
+    new Chart(document.getElementById("spentChart"), {
+        type: "line",
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: "Spent (DA)",
+                data: monthlySpent,
+                borderColor: "rgba(75, 192, 100, 1)",
+                backgroundColor: "rgba(75, 192, 100, 0.2)",
+                tension: 0.3,
+                fill: true,
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } },
+        },
+    });
+});
+</script>
 {% endblock %}

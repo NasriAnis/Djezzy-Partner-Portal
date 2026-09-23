@@ -1,10 +1,15 @@
+import json
+from datetime import timedelta
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import F, Count, Q
+from django.db.models import DecimalField, ExpressionWrapper, F, Count, Q, Sum
+from django.db.models.functions import TruncMonth
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.db import transaction
+from django.utils import timezone
 
 from clients.models import Client, Store, StoreOfferTransaction, StoreStock
 from notifications.utils import notify
@@ -101,6 +106,33 @@ def commercials_client_detail_page(request, client_id):
         .order_by("-created_at")
     )
 
+    # --- Monthly bought/spent, last 6 months, approved transactions only ---
+    approved_transactions = StoreOfferTransaction.objects.filter(
+        store__in=stores, status=StoreOfferTransaction.STATUS_APPROVED
+    )
+    line_total = ExpressionWrapper(
+        F("quantity_bought") * F("plan__price_da"),
+        output_field=DecimalField(max_digits=14, decimal_places=2),
+    )
+    six_months_ago = timezone.now() - timedelta(days=180)
+    monthly_qs = (
+        approved_transactions.filter(created_at__gte=six_months_ago)
+        .annotate(month=TruncMonth("created_at"), line_total=line_total)
+        .values("month")
+        .annotate(offers_bought=Sum("quantity_bought"), spent=Sum("line_total"))
+        .order_by("month")
+    )
+    monthly_labels = [row["month"].strftime("%b %Y") for row in monthly_qs]
+    monthly_bought = [row["offers_bought"] or 0 for row in monthly_qs]
+    monthly_spent = [float(row["spent"] or 0) for row in monthly_qs]
+
+    # --- Current stock across this client's stores ---
+    stock = (
+        StoreStock.objects.filter(store__in=stores)
+        .select_related("store", "plan__offer")
+        .order_by("store__name", "plan__offer__title")
+    )
+
     return render(
         request,
         "interns/commercials_client_detail_page.html",
@@ -108,6 +140,10 @@ def commercials_client_detail_page(request, client_id):
             "client": client,
             "stores": stores,
             "transactions": transactions,
+            "stock": stock,
+            "monthly_labels_json": json.dumps(monthly_labels),
+            "monthly_bought_json": json.dumps(monthly_bought),
+            "monthly_spent_json": json.dumps(monthly_spent),
         },
     )
 
