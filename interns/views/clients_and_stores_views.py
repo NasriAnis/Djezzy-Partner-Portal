@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.db import transaction
 from django.utils import timezone
 
-from clients.models import Client, Store, StoreOfferTransaction, StoreStock
+from clients.models import Client, OfferSale, Store, StoreOfferTransaction, StoreStock
 from notifications.utils import notify
 
 from .utils_views import commercial_required, get_commercial_info
@@ -153,6 +153,12 @@ def commercials_client_detail_page(request, client_id):
         .select_related("store", "plan__offer")
         .order_by("store__name", "plan__offer__title")
     )
+    # --- Selling history
+    selling_history = (
+    OfferSale.objects.filter(store__in=stores)
+        .select_related("store", "plan", "plan__offer")
+        .order_by("created_at")
+    )
 
     return render(
         request,
@@ -162,6 +168,7 @@ def commercials_client_detail_page(request, client_id):
             "stores": stores,
             "transactions": transactions,
             "stock": stock,
+            "selling_history": selling_history,
             "monthly_labels_json": json.dumps(monthly_labels),
             "monthly_bought_json": json.dumps(monthly_bought),
             "monthly_spent_json": json.dumps(monthly_spent),
