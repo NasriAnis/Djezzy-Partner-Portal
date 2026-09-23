@@ -21,7 +21,30 @@
                     </select>
                 </form>
             {% endif %}
-            <h3 class="text-light">{{ store.name }} — Stock</h3>
+            <h3 class="text-light">Sell an Offer</h3>
+            <form method="post" class="row g-2 align-items-end">
+                {% csrf_token %}
+                <input type="hidden" name="store_id_selected" value="{{ store.id }}">
+                <div class="col-md-5">
+                    <label class="text-light">Offer / Plan</label>
+                    <select name="plan_id" class="form-select" required>
+                        <option value="">Select</option>
+                        {% for s in stock_list %}
+                            {% if s.remaining > 0 %}
+                                <option value="{{ s.plan.id }}">{{ s.plan.offer.title }} — {{ s.plan.label }} ({{ s.remaining }} left)</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="text-light">Client phone number</label>
+                    <input type="text" name="phone_number" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">Sell</button>
+                </div>
+            </form>
+            <h3 class="text-light mt-4">{{ store.name }} — Stock</h3>
             <table class="table table-dark table-striped">
                 <thead>
                     <tr>
