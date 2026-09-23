@@ -71,29 +71,6 @@
                     {% endfor %}
                 </tbody>
             </table>
-            <h3 class="text-light mt-4">Sell an Offer</h3>
-            <form method="post" class="row g-2 align-items-end">
-                {% csrf_token %}
-                <input type="hidden" name="store_id_selected" value="{{ store.id }}">
-                <div class="col-md-5">
-                    <label class="text-light">Offer / Plan</label>
-                    <select name="plan_id" class="form-select" required>
-                        <option value="">Select</option>
-                        {% for s in stock_list %}
-                            {% if s.remaining > 0 %}
-                                <option value="{{ s.plan.id }}">{{ s.plan.offer.title }} — {{ s.plan.label }} ({{ s.remaining }} left)</option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="text-light">Client phone number</label>
-                    <input type="text" name="phone_number" class="form-control" required>
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary w-100">Sell</button>
-                </div>
-            </form>
             {% if form.errors %}
                 <div class="mt-2">
                     {% for field, errors in form.errors.items %}

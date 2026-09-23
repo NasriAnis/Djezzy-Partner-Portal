@@ -27,30 +27,46 @@ def commercials_clients_page(request):
     context = {"view_filter": view_filter}
 
     if view_filter == "pending_offers":
-        pending_transactions = scope_by_commercial(
-            StoreOfferTransaction.objects.filter(
-                status=StoreOfferTransaction.STATUS_PENDING,
-            ),
-            commercial, commercial_type, field="store__commmercial",
-        ).select_related("store__client__user", "plan__offer").order_by("-created_at")
+        pending_transactions = (
+            scope_by_commercial(
+                StoreOfferTransaction.objects.filter(
+                    status=StoreOfferTransaction.STATUS_PENDING,
+                ),
+                commercial,
+                commercial_type,
+                field="store__commmercial",
+            )
+            .select_related("store__client__user", "plan__offer")
+            .order_by("-created_at")
+        )
         context["pending_transactions"] = pending_transactions
 
     elif view_filter == "waitlist":
-        waitlisted_transactions = scope_by_commercial(
-            StoreOfferTransaction.objects.filter(
-                status=StoreOfferTransaction.STATUS_WAITLISTED,
-            ),
-            commercial, commercial_type, field="store__commmercial",
-        ).select_related(
-            "store__client__user", "plan__offer"
-        ).order_by("created_at")  # oldest first matches FIFO fulfillment order
+        waitlisted_transactions = (
+            scope_by_commercial(
+                StoreOfferTransaction.objects.filter(
+                    status=StoreOfferTransaction.STATUS_WAITLISTED,
+                ),
+                commercial,
+                commercial_type,
+                field="store__commmercial",
+            )
+            .select_related("store__client__user", "plan__offer")
+            .order_by("created_at")
+        )  # oldest first matches FIFO fulfillment order
         context["waitlisted_transactions"] = waitlisted_transactions
 
     else:
-        clients = scope_by_commercial(
-            Client.objects.all(), commercial, commercial_type,
-            field="locations__commmercial",
-        ).select_related("user").prefetch_related("locations")
+        clients = (
+            scope_by_commercial(
+                Client.objects.all(),
+                commercial,
+                commercial_type,
+                field="locations__commmercial",
+            )
+            .select_related("user")
+            .prefetch_related("locations")
+        )
 
         # The two annotations below must mirror the same scope as the
         # queryset itself: this commercial's stores only, or every
@@ -63,10 +79,14 @@ def commercials_clients_page(request):
 
         clients = clients.annotate(
             my_locations_count=Count(
-                "locations", filter=location_filter, distinct=True,
+                "locations",
+                filter=location_filter,
+                distinct=True,
             ),
             inactive_locations_count=Count(
-                "locations", filter=pending_filter, distinct=True,
+                "locations",
+                filter=pending_filter,
+                distinct=True,
             ),
         )
 
@@ -85,7 +105,8 @@ def commercials_store_detail_page(request, store_id):
     store = get_object_or_404(
         scope_by_commercial(
             Store.objects.select_related("client__user", "comune"),
-            commercial, commercial_type,
+            commercial,
+            commercial_type,
         ),
         id=store_id,
     )
@@ -157,7 +178,10 @@ def commercials_client_detail_page(request, client_id):
 def commercials_approve_transaction(request, transaction_id):
     commercial, can_edit, commercial_type = get_commercial_info(request)
     denial = guard(
-        request, can_edit, commercial_type, MANAGE_CLIENTS,
+        request,
+        can_edit,
+        commercial_type,
+        MANAGE_CLIENTS,
         redirect_to=redirect("commercials_clients_page"),
     )
     if denial:
@@ -168,7 +192,9 @@ def commercials_approve_transaction(request, transaction_id):
         trans = get_object_or_404(
             scope_by_commercial(
                 StoreOfferTransaction.objects.select_for_update(),
-                commercial, commercial_type, field="store__commmercial",
+                commercial,
+                commercial_type,
+                field="store__commmercial",
             ),
             id=transaction_id,
         )
@@ -206,7 +232,10 @@ def commercials_approve_transaction(request, transaction_id):
 def commercials_deny_transaction(request, transaction_id):
     commercial, can_edit, commercial_type = get_commercial_info(request)
     denial = guard(
-        request, can_edit, commercial_type, MANAGE_CLIENTS,
+        request,
+        can_edit,
+        commercial_type,
+        MANAGE_CLIENTS,
         redirect_to=redirect("commercials_clients_page"),
     )
     if denial:
@@ -226,7 +255,9 @@ def commercials_deny_transaction(request, transaction_id):
         trans = get_object_or_404(
             scope_by_commercial(
                 StoreOfferTransaction.objects.select_for_update(),
-                commercial, commercial_type, field="store__commmercial",
+                commercial,
+                commercial_type,
+                field="store__commmercial",
             ),
             id=transaction_id,
         )
@@ -254,7 +285,10 @@ def commercials_deny_transaction(request, transaction_id):
 def commercials_approve_store(request, store_id):
     commercial, can_edit, commercial_type = get_commercial_info(request)
     denial = guard(
-        request, can_edit, commercial_type, MANAGE_CLIENTS,
+        request,
+        can_edit,
+        commercial_type,
+        MANAGE_CLIENTS,
         redirect_to=redirect("commercials_store_detail_page", store_id=store_id),
     )
     if denial:
@@ -282,7 +316,10 @@ def commercials_approve_store(request, store_id):
 def commercials_block_store(request, store_id):
     commercial, can_edit, commercial_type = get_commercial_info(request)
     denial = guard(
-        request, can_edit, commercial_type, MANAGE_CLIENTS,
+        request,
+        can_edit,
+        commercial_type,
+        MANAGE_CLIENTS,
         redirect_to=redirect("commercials_store_detail_page", store_id=store_id),
     )
     if denial:
@@ -318,7 +355,10 @@ def commercials_block_store(request, store_id):
 def commercials_fulfill_waitlist_transaction(request, transaction_id):
     commercial, can_edit, commercial_type = get_commercial_info(request)
     denial = guard(
-        request, can_edit, commercial_type, MANAGE_CLIENTS,
+        request,
+        can_edit,
+        commercial_type,
+        MANAGE_CLIENTS,
         redirect_to=redirect("commercials_clients_page"),
     )
     if denial:
@@ -334,7 +374,9 @@ def commercials_fulfill_waitlist_transaction(request, transaction_id):
                 StoreOfferTransaction.objects.select_for_update().filter(
                     status=StoreOfferTransaction.STATUS_WAITLISTED,
                 ),
-                commercial, commercial_type, field="store__commmercial",
+                commercial,
+                commercial_type,
+                field="store__commmercial",
             ),
             id=transaction_id,
         )

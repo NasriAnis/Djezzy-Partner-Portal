@@ -29,25 +29,23 @@
                         <span class="tag">Commercial</span>
                     </span>
                 </a>
-
                 <!-- Navigation & User Controls -->
                 <div class="d-flex align-items-center gap-3">
                     <a href="{% url 'commercials_dashboard_page' %}"
                        class="nav-text-link {% if request.resolver_match.url_name == 'commercials_dashboard_page' %}fw-bold{% endif %}">
-                       Dashboard
+                        Dashboard
                     </a>
                     <a href="{% url 'commercials_offers_page' %}"
                        class="nav-text-link {% if request.resolver_match.url_name == 'commercials_offers_page' %}fw-bold{% endif %}">
-                       Offers
+                        Offers
                     </a>
                     <a href="{% url 'commercials_clients_page' %}"
                        class="nav-text-link {% if request.resolver_match.url_name == 'commercials_clients_page' %}fw-bold{% endif %}">
-                       My Clients
+                        My Clients
                     </a>
-
                     {% if current_commercial %}
                         <div class="d-flex align-items-center gap-2 px-2 py-1 rounded"
-                             style="background: var(--djz-surface-2);">
+                             style="background: var(--djz-surface-2)">
                             <span class="fw-semibold small">
                                 {{ current_commercial.user.get_full_name|default:current_commercial.user.username }}
                             </span>
@@ -59,8 +57,9 @@
                             {% endif %}
                         </div>
                     {% endif %}
-
-                    <form action="{% url 'commercials_logout' %}" method="post" class="d-inline">
+                    <form action="{% url 'commercials_logout' %}"
+                          method="post"
+                          class="d-inline">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-outline-danger btn-sm" title="Log out">
                             <i class="bi bi-box-arrow-right"></i>
@@ -69,7 +68,6 @@
                 </div>
             </div>
         </header>
-
         <!-- ============ MAIN CONTENT ============ -->
         <div class="container-fluid" style="max-width: 1200px; margin: 0 auto;">
             <main class="content py-4">
@@ -78,18 +76,15 @@
                         <div class="alert alert-{{ message.tags }} py-2">{{ message }}</div>
                     {% endfor %}
                 {% endif %}
-
                 {% block content %}
                     {# Child templates inject their content here #}
                 {% endblock %}
             </main>
         </div>
-
         <!-- ============ FOOTER ============ -->
         <footer class="site-footer text-center py-3 border-top border-secondary">
             <div class="container">© {% now "Y" %} Djezzy Commercial Portal. All rights reserved.</div>
         </footer>
-
         <script src="{% static 'shared/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
         {% block extra_js %}{% endblock %}
     </body>

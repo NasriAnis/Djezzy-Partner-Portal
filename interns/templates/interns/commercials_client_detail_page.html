@@ -5,10 +5,7 @@
        class="btn btn-outline-light btn-sm mb-3">← Back to Clients</a>
     <h1 class="mb-1">{{ client.user.get_full_name|default:client.user.username }}</h1>
     <p class="text-secondary mb-4">{{ client.user.email }} · {{ client.phone|default:"—" }}</p>
-
-    <style>
-        .chart-card { min-height: 300px; }
-    </style>
+    <style>.chart-card { min-height: 300px; }</style>
     <div class="row g-3 mb-4">
         <div class="col-lg-6">
             <div class="card chart-card">
@@ -27,7 +24,6 @@
             </div>
         </div>
     </div>
-
     <!-- ============ STORES ============ -->
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center"
@@ -81,7 +77,6 @@
             </div>
         </div>
     </div>
-
     <!-- ============ PENDING STORES ============ -->
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center"
@@ -135,7 +130,6 @@
             </div>
         </div>
     </div>
-
     <!-- ============ BLOCKED STORES HISTORY ============ -->
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center"
@@ -189,7 +183,6 @@
             </div>
         </div>
     </div>
-
     <!-- ============ CURRENT STOCK ============ -->
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center"
@@ -234,7 +227,6 @@
             </div>
         </div>
     </div>
-
     <!-- ============ PURCHASE HISTORY ============ -->
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center"
@@ -351,9 +343,8 @@
             </div>
         </div>
     </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
 document.addEventListener("DOMContentLoaded", function () {
     const monthlyLabels = {{ monthly_labels_json|safe }};
     const monthlyBought = {{ monthly_bought_json|safe }};
@@ -396,5 +387,5 @@ document.addEventListener("DOMContentLoaded", function () {
         },
     });
 });
-</script>
+    </script>
 {% endblock %}

@@ -1,10 +1,9 @@
 {% extends "interns/interns_base.html" %}
 {% block title %}Dashboard{% endblock %}
-
 {% block content %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-<style>
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
     .chart-card { min-height: 320px; }
     #wilayaMap { 
         height: 600px;
@@ -13,9 +12,8 @@
     }
     .leaflet-popup-content-wrapper { background: #1f1f1f; color: #eee; }
     .leaflet-popup-tip { background: #1f1f1f; }
-</style>
+    </style>
     <h1 class="mb-4">Dashboard</h1>
-
     <div class="row g-3 mb-4 justify-content-center">
         <div class="col-6 col-lg-3">
             <div class="card stat-card text-center">
@@ -42,8 +40,6 @@
             </div>
         </div>
     </div>
-
-
     <!-- Monthly offers sold / revenue -->
     <div class="row g-3 mb-4">
         <div class="col-lg-6">
@@ -63,7 +59,6 @@
             </div>
         </div>
     </div>
-
     <!-- Store density / regional sales map -->
     <div class="row g-3 mb-4">
         <div class="col-12">
@@ -78,7 +73,6 @@
             </div>
         </div>
     </div>
-
     <!-- Per-region breakdown table -->
     <div class="row g-3 mb-4">
         <div class="col-12">
@@ -115,10 +109,10 @@
             </div>
         </div>
     </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script>
 document.addEventListener("DOMContentLoaded", function () {
     const monthlyLabels = {{ monthly_labels_json|safe }};
     const monthlySold = {{ monthly_sold_json|safe }};
@@ -211,5 +205,5 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 });
-</script>
+    </script>
 {% endblock %}

@@ -23,8 +23,14 @@ def can_perform(can_edit, commercial_type, *allowed_types):
     return can_edit and can_access(commercial_type, *allowed_types)
 
 
-def guard(request, can_edit, commercial_type, *allowed_types,
-          redirect_to, message="You don't have access to do this."):
+def guard(
+    request,
+    can_edit,
+    commercial_type,
+    *allowed_types,
+    redirect_to,
+    message="You don't have access to do this."
+):
     """
     Inline permission guard for views with varying redirect targets.
     Returns an HttpResponseRedirect to send back if access is denied,
