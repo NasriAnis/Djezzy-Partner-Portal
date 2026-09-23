@@ -2,11 +2,6 @@
 {% block title %}Manage My Offers{% endblock %}
 {% block content %}
     <div class="container" style="max-width: 1000px;">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-info">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
         {% if not store %}
             <p class="text-light">No store found on your account yet.</p>
         {% else %}

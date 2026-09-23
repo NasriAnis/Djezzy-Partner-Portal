@@ -87,18 +87,33 @@
                         {% endif %}
                     </div>
                 </div>
-            </header>
-            <div class="container-fluid">
-                <main class="content py-4">
-                    {% block content %}
-                        {# child templates inject their content here #}
-                    {% endblock %}
-                </main>
             </div>
-            <footer class="site-footer text-center">
-                <div class="container">© {% now "Y" %} Djezzy Partner Portal. All rights reserved.</div>
-            </footer>
-            <script src="{% static 'shared/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-            {% block extra_js %}{% endblock %}
-        </body>
-    </html>
+        </header>
+        {% if messages %}
+            <div class="container py-3" style="max-width: 1200px;">
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show"
+                         role="alert">
+                        {{ message }}
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <div class="container-fluid">
+            <main class="content py-4">
+                {% block content %}
+                    {# child templates inject their content here #}
+                {% endblock %}
+            </main>
+        </div>
+        <footer class="site-footer text-center">
+            <div class="container">© {% now "Y" %} Djezzy Partner Portal. All rights reserved.</div>
+        </footer>
+        <script src="{% static 'shared/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+        {% block extra_js %}{% endblock %}
+    </body>
+</html>
