@@ -15,9 +15,10 @@
     .leaflet-popup-tip { background: #1f1f1f; }
 </style>
     <h1 class="mb-4">Dashboard</h1>
-    <div class="row g-3 mb-4">
+
+    <div class="row g-3 mb-4 justify-content-center">
         <div class="col-6 col-lg-3">
-            <div class="card stat-card">
+            <div class="card stat-card text-center">
                 <div class="card-body">
                     <div class="stat-label">Offers</div>
                     <div class="stat-value">{{ offers_count }}</div>
@@ -25,7 +26,7 @@
             </div>
         </div>
         <div class="col-6 col-lg-3">
-            <div class="card stat-card">
+            <div class="card stat-card text-center">
                 <div class="card-body">
                     <div class="stat-label">Clients</div>
                     <div class="stat-value">{{ clients_count }}</div>
@@ -33,7 +34,7 @@
             </div>
         </div>
         <div class="col-6 col-lg-3">
-            <div class="card stat-card">
+            <div class="card stat-card text-center">
                 <div class="card-body">
                     <div class="stat-label">Stores</div>
                     <div class="stat-value">{{ stores_count }}</div>
@@ -41,6 +42,7 @@
             </div>
         </div>
     </div>
+
 
     <!-- Monthly offers sold / revenue -->
     <div class="row g-3 mb-4">
