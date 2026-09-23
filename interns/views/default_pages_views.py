@@ -1,19 +1,16 @@
 import json
-from datetime import timedelta
 from pathlib import Path
 
 from django.conf import settings
-from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Count, DecimalField, ExpressionWrapper, F, Sum
-from django.db.models.functions import TruncMonth
+from django.db.models import Count, Sum
 from django.shortcuts import render, redirect
-from django.utils import timezone
 
 from core.models import Offer
 from clients.models import Client, Store, StoreOfferTransaction
 from shared.models import WILAYA_CHOICES
+from shared.view_helpers import email_login_view, line_total_expr, monthly_stats
 
 from .utils_views import commercial_required
 
@@ -114,19 +111,9 @@ def commercials_index_page(request):
 
 
 def commercials_login(request):
-    if request.method == "POST":
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-        user = authenticate(request, username=email, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect("commercials_dashboard_page")
-        return render(
-            request,
-            "interns/commercials_login_page.html",
-            {"error": "Invalid credentials"},
-        )
-    return render(request, "interns/commercials_login_page.html")
+    return email_login_view(
+        request, "interns/commercials_login_page.html", "commercials_dashboard_page"
+    )
 
 
 @login_required(login_url="commercials_login")
@@ -138,28 +125,14 @@ def commercials_dashboard_page(request):
     all_transactions = StoreOfferTransaction.objects.filter(
         status=StoreOfferTransaction.STATUS_APPROVED
     )
-    line_total = ExpressionWrapper(
-        F("quantity_bought") * F("plan__price_da"),
-        output_field=DecimalField(max_digits=14, decimal_places=2),
-    )
 
     # --- Monthly offers sold / revenue, last 6 months ---
-    six_months_ago = timezone.now() - timedelta(days=180)
-    monthly_qs = (
-        all_transactions.filter(created_at__gte=six_months_ago)
-        .annotate(month=TruncMonth("created_at"), line_total=line_total)
-        .values("month")
-        .annotate(offers_sold=Sum("quantity_bought"), revenue=Sum("line_total"))
-        .order_by("month")
-    )
-    monthly_labels = [row["month"].strftime("%b %Y") for row in monthly_qs]
-    monthly_sold = [row["offers_sold"] or 0 for row in monthly_qs]
-    monthly_revenue = [float(row["revenue"] or 0) for row in monthly_qs]
+    monthly_labels, monthly_sold, monthly_revenue = monthly_stats(all_transactions)
 
     # --- Per-wilaya store density, offers sold and revenue ---
     density_qs = all_stores.values("wilaya").annotate(store_count=Count("id"))
     sales_by_wilaya_qs = (
-        all_transactions.annotate(line_total=line_total)
+        all_transactions.annotate(line_total=line_total_expr())
         .values("store__wilaya")
         .annotate(offers_sold=Sum("quantity_bought"), revenue=Sum("line_total"))
     )

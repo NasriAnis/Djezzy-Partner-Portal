@@ -7,7 +7,8 @@ from django.urls import reverse
 
 from core.models import OfferQuota
 from ..forms import OfferSaleForm
-from ..models import Store, StoreOfferTransaction, StoreStock, OfferSale
+from ..models import StoreOfferTransaction, StoreStock, OfferSale
+from .utils_views import get_selected_store
 
 ########## Pages ##########
 
@@ -15,11 +16,9 @@ from ..models import Store, StoreOfferTransaction, StoreStock, OfferSale
 @login_required(login_url="client_login")
 def client_offer_manage_page(request):
     client = request.user.client_profile
-    stores = Store.objects.filter(client=client, status=Store.STATUS_APPROVED).order_by(
-        "name"
-    )
+    store, stores = get_selected_store(request, client, post_field="store_id_selected")
 
-    if not stores.exists():
+    if store is None:
         messages.info(request, "You don't have any store yet. Add one first.")
         return render(
             request,
@@ -32,11 +31,6 @@ def client_offer_manage_page(request):
                 "form": None,
             },
         )
-
-    store_id = request.GET.get("store") or request.POST.get("store_id_selected")
-    store = stores.filter(id=store_id).first() if store_id else stores.first()
-    if not store:
-        store = stores.first()
 
     if request.method == "POST":
         form = OfferSaleForm(request.POST, store=store)
@@ -92,11 +86,9 @@ def client_offer_manage_page(request):
 @login_required(login_url="client_login")
 def client_offer_draft_and_stock_page(request):
     client = request.user.client_profile
-    stores = Store.objects.filter(client=client, status=Store.STATUS_APPROVED).order_by(
-        "name"
-    )
+    store, stores = get_selected_store(request, client)
 
-    if not stores.exists():
+    if store is None:
         messages.info(request, "You don't have any store yet. Add one first.")
         return render(
             request,
@@ -111,11 +103,6 @@ def client_offer_draft_and_stock_page(request):
                 "stock_list": [],
             },
         )
-
-    store_id = request.GET.get("store") or request.POST.get("store_id")
-    store = stores.filter(id=store_id).first() if store_id else stores.first()
-    if not store:
-        store = stores.first()
 
     if request.method == "POST" and request.POST.get("action") == "submit_draft":
         tx = get_object_or_404(

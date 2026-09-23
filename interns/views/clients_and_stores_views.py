@@ -1,21 +1,18 @@
 import json
-from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import DecimalField, ExpressionWrapper, F, Count, Q, Sum
-from django.db.models.functions import TruncMonth
+from django.db.models import F, Count, Q
 from django.contrib import messages
 from django.views.decorators.http import require_POST
-from django.urls import reverse
 from django.db import transaction
-from django.utils import timezone
 
 from clients.models import Client, OfferSale, Store, StoreOfferTransaction, StoreStock
 from notifications.utils import notify
+from shared.view_helpers import get_fallback_url, monthly_stats, transition_status
 
 from .utils_views import commercial_required, get_commercial_info
-from .permissions import guard, scope_by_commercial, MANAGE_ALL, MANAGE_CLIENTS
+from .permissions import guard, scope_by_commercial, get_scoped_or_404, MANAGE_ALL, MANAGE_CLIENTS
 from core.models import OfferQuota
 
 
@@ -88,12 +85,10 @@ def commercials_clients_page(request):
 @commercial_required
 def commercials_store_detail_page(request, store_id):
     commercial, _, commercial_type = get_commercial_info(request)
-    store = get_object_or_404(
-        scope_by_commercial(
-            Store.objects.select_related("client__user", "comune"),
-            commercial,
-            commercial_type,
-        ),
+    store = get_scoped_or_404(
+        Store.objects.select_related("client__user", "comune"),
+        commercial,
+        commercial_type,
         id=store_id,
     )
     return render(
@@ -114,22 +109,12 @@ def commercials_client_detail_page(request, client_id):
         .order_by("-created_at")
     )
 
-    line_total = ExpressionWrapper(
-        F("quantity_bought") * F("plan__price_da"),
-        output_field=DecimalField(max_digits=14, decimal_places=2),
-    )
-    six_months_ago = timezone.now() - timedelta(days=180)
-
-    monthly_qs = (
+    monthly_labels, monthly_bought, monthly_spent = monthly_stats(
         StoreOfferTransaction.objects.filter(
-            store__in=stores,
-            status=StoreOfferTransaction.STATUS_APPROVED,
-            created_at__gte=six_months_ago,
-        )
-        .annotate(month=TruncMonth("created_at"), line_total=line_total)
-        .values("month")
-        .annotate(offers_bought=Sum("quantity_bought"), spent=Sum("line_total"))
-        .order_by("month")
+            store__in=stores, status=StoreOfferTransaction.STATUS_APPROVED
+        ),
+        qty_label="offers_bought",
+        amount_label="spent",
     )
 
     stock = (
@@ -152,15 +137,9 @@ def commercials_client_detail_page(request, client_id):
             "transactions": transactions,
             "stock": stock,
             "selling_history": selling_history,
-            "monthly_labels_json": json.dumps(
-                [row["month"].strftime("%b %Y") for row in monthly_qs]
-            ),
-            "monthly_bought_json": json.dumps(
-                [row["offers_bought"] or 0 for row in monthly_qs]
-            ),
-            "monthly_spent_json": json.dumps(
-                [float(row["spent"] or 0) for row in monthly_qs]
-            ),
+            "monthly_labels_json": json.dumps(monthly_labels),
+            "monthly_bought_json": json.dumps(monthly_bought),
+            "monthly_spent_json": json.dumps(monthly_spent),
         },
     )
 
@@ -183,41 +162,37 @@ def commercials_approve_transaction(request, transaction_id):
     if denial:
         return denial
 
+    fallback_url = get_fallback_url(request, "commercials_clients_page")
+
     with transaction.atomic():
-        trans = get_object_or_404(
-            scope_by_commercial(
-                StoreOfferTransaction.objects.select_for_update(),
-                commercial,
-                commercial_type,
-                field="store__commmercial",
-            ),
+        trans = get_scoped_or_404(
+            StoreOfferTransaction.objects.select_for_update(),
+            commercial,
+            commercial_type,
+            field="store__commmercial",
             id=transaction_id,
         )
 
-        if trans.status != StoreOfferTransaction.STATUS_APPROVED:
-            trans.status = StoreOfferTransaction.STATUS_APPROVED
-            trans.save(update_fields=["status"])
+        approved = transition_status(
+            trans,
+            new_status=StoreOfferTransaction.STATUS_APPROVED,
+            request=request,
+            success_msg=f"Offer for {trans.store.name} approved.",
+            notify_target=trans.store.client,
+            notify_msg=f"Your transaction {trans.quantity_bought} has been approved!",
+        )
 
+        if approved:
             stock_obj, created = StoreStock.objects.select_for_update().get_or_create(
                 store=trans.store,
                 plan=trans.plan,
                 defaults={"stock": trans.quantity_bought},
             )
-
             if not created:
                 stock_obj.stock = F("stock") + trans.quantity_bought
                 stock_obj.save(update_fields=["stock"])
 
-            messages.success(request, f"Offer for {trans.store.name} approved.")
-            notify(
-                trans.store.client,
-                f"Your transaction {trans.quantity_bought} has been approved!",
-                trans.store,
-            )
-
-    return redirect(
-        request.META.get("HTTP_REFERER", reverse("commercials_clients_page"))
-    )
+    return redirect(fallback_url)
 
 
 @login_required(login_url="commercials_login")
@@ -235,38 +210,35 @@ def commercials_deny_transaction(request, transaction_id):
     if denial:
         return denial
 
-    fallback_url = request.META.get("HTTP_REFERER") or reverse(
-        "commercials_clients_page"
-    )
+    fallback_url = get_fallback_url(request, "commercials_clients_page")
+
     reason = request.POST.get("reason", "").strip()
     if not reason:
         messages.error(request, "You must provide a reason.")
         return redirect(fallback_url)
 
     with transaction.atomic():
-        trans = get_object_or_404(
-            scope_by_commercial(
-                StoreOfferTransaction.objects.select_for_update(),
-                commercial,
-                commercial_type,
-                field="store__commmercial",
-            ),
+        trans = get_scoped_or_404(
+            StoreOfferTransaction.objects.select_for_update(),
+            commercial,
+            commercial_type,
+            field="store__commmercial",
             id=transaction_id,
         )
 
-        if trans.status != StoreOfferTransaction.STATUS_BLOCKED:
-            trans.status = StoreOfferTransaction.STATUS_BLOCKED
-            trans.comment = reason
-            trans.save(update_fields=["status", "comment"])
-
-            messages.success(request, f"Offer for {trans.store.name} blocked.")
-            notify(
-                trans.store.client,
-                f"Your transaction {trans.quantity_bought} has not been approved: {reason}",
-                trans.store,
-            )
-        else:
+        if trans.status == StoreOfferTransaction.STATUS_BLOCKED:
             messages.info(request, "This transaction was already blocked.")
+        else:
+            trans.comment = reason
+            transition_status(
+                trans,
+                new_status=StoreOfferTransaction.STATUS_BLOCKED,
+                extra_fields=["comment"],
+                request=request,
+                success_msg=f"Offer for {trans.store.name} blocked.",
+                notify_target=trans.store.client,
+                notify_msg=f"Your transaction {trans.quantity_bought} has not been approved: {reason}",
+            )
 
     return redirect(fallback_url)
 
@@ -286,20 +258,20 @@ def commercials_approve_store(request, store_id):
     if denial:
         return denial
 
-    store = get_object_or_404(
-        scope_by_commercial(Store.objects.all(), commercial, commercial_type),
-        id=store_id,
+    store = get_scoped_or_404(
+        Store.objects.all(), commercial, commercial_type, id=store_id
     )
 
-    if store.status != Store.STATUS_APPROVED:
-        store.status = Store.STATUS_APPROVED
-        store.save(update_fields=["status"])
-        messages.success(request, f'"{store.name}" approved.')
-        notify(store.client, f"Your store {store.name} has been approved!", store)
-
-    return redirect(
-        request.META.get("HTTP_REFERER", reverse("commercials_clients_page"))
+    transition_status(
+        store,
+        new_status=Store.STATUS_APPROVED,
+        request=request,
+        success_msg=f'"{store.name}" approved.',
+        notify_target=store.client,
+        notify_msg=f"Your store {store.name} has been approved!",
     )
+
+    return redirect(get_fallback_url(request, "commercials_clients_page"))
 
 
 @login_required(login_url="commercials_login")
@@ -317,26 +289,24 @@ def commercials_block_store(request, store_id):
     if denial:
         return denial
 
-    store = get_object_or_404(
-        scope_by_commercial(Store.objects.all(), commercial, commercial_type),
-        id=store_id,
+    store = get_scoped_or_404(
+        Store.objects.all(), commercial, commercial_type, id=store_id
     )
-    fallback_url = request.META.get("HTTP_REFERER") or reverse(
-        "commercials_clients_page"
-    )
+    fallback_url = get_fallback_url(request, "commercials_clients_page")
 
     reason = request.POST.get("reason", "").strip()
     if not reason:
         messages.error(request, "You must provide a reason.")
         return redirect(fallback_url)
 
-    if store.status != Store.STATUS_BLOCKED:
-        store.status = Store.STATUS_BLOCKED
-        store.save(update_fields=["status"])
-        messages.success(request, f'"{store.name}" blocked.')
-        notify(
-            store.client, f"Your store {store.name} has been blocked: {reason}", store
-        )
+    transition_status(
+        store,
+        new_status=Store.STATUS_BLOCKED,
+        request=request,
+        success_msg=f'"{store.name}" blocked.',
+        notify_target=store.client,
+        notify_msg=f"Your store {store.name} has been blocked: {reason}",
+    )
 
     return redirect(fallback_url)
 
@@ -356,20 +326,16 @@ def commercials_fulfill_waitlist_transaction(request, transaction_id):
     if denial:
         return denial
 
-    fallback_url = request.META.get("HTTP_REFERER") or reverse(
-        "commercials_clients_page"
-    )
+    fallback_url = get_fallback_url(request, "commercials_clients_page")
 
     with transaction.atomic():
-        tx = get_object_or_404(
-            scope_by_commercial(
-                StoreOfferTransaction.objects.select_for_update().filter(
-                    status=StoreOfferTransaction.STATUS_WAITLISTED,
-                ),
-                commercial,
-                commercial_type,
-                field="store__commmercial",
+        tx = get_scoped_or_404(
+            StoreOfferTransaction.objects.select_for_update().filter(
+                status=StoreOfferTransaction.STATUS_WAITLISTED,
             ),
+            commercial,
+            commercial_type,
+            field="store__commmercial",
             id=transaction_id,
         )
 
@@ -410,16 +376,13 @@ def commercials_fulfill_waitlist_transaction(request, transaction_id):
         quota.save(update_fields=["allocated_quota"])
 
         if tx.quantity_bought <= approved_qty:
-            tx.status = StoreOfferTransaction.STATUS_APPROVED
-            tx.save(update_fields=["status"])
-            messages.success(
-                request,
-                f"Approved {approved_qty}x '{tx.plan.label}' for {tx.store.name}.",
-            )
-            notify(
-                tx.store.client,
-                f"Your transaction for {approved_qty}x '{tx.plan.label}' has been approved!",
-                tx.store,
+            transition_status(
+                tx,
+                new_status=StoreOfferTransaction.STATUS_APPROVED,
+                request=request,
+                success_msg=f"Approved {approved_qty}x '{tx.plan.label}' for {tx.store.name}.",
+                notify_target=tx.store.client,
+                notify_msg=f"Your transaction for {approved_qty}x '{tx.plan.label}' has been approved!",
             )
         else:
             StoreOfferTransaction.objects.create(

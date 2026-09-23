@@ -1,9 +1,10 @@
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Prefetch
 
+from shared.view_helpers import email_login_view
 from ..forms import ClientSignupForm, StoreForm
 from ..models import Client, Store, StoreOfferTransaction
 
@@ -31,19 +32,12 @@ def client_signup(request):
 
 
 def client_login(request):
-    if request.method == "POST":
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-        user = authenticate(request, username=email, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect("client_dashboard_page", username=user.username)
-        return render(
-            request,
-            "clients/client_login_page.html",
-            {"error": "Invalid credentials"},
-        )
-    return render(request, "clients/client_login_page.html")
+    return email_login_view(
+        request,
+        "clients/client_login_page.html",
+        "client_dashboard_page",
+        redirect_kwargs=lambda user: {"username": user.username},
+    )
 
 
 @login_required(login_url="client_login")

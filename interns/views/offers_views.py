@@ -11,6 +11,7 @@ from interns.forms import (
     OfferQuotaForm,
     OfferCategory,
 )
+from shared.view_helpers import handle_form
 
 from .utils_views import commercial_required, get_commercial_info
 from .permissions import can_perform, MANAGE_OFFERS
@@ -29,23 +30,24 @@ def commercials_offers_page(request):
         form_type = request.POST.get("form_type")
 
         if form_type == "add_category":
-            cat_form = OfferCategoryForm(request.POST)
-            if cat_form.is_valid():
-                cat_form.save()
-                messages.success(request, "Category created.")
-            else:
-                messages.error(request, "Could not create category — check the form.")
+            handle_form(
+                request,
+                OfferCategoryForm,
+                success="Category created.",
+                error="Could not create category — check the form.",
+            )
 
         elif form_type == "edit_category":
             category = get_object_or_404(
                 OfferCategory, id=request.POST.get("category_id")
             )
-            cat_form = OfferCategoryForm(request.POST, instance=category)
-            if cat_form.is_valid():
-                cat_form.save()
-                messages.success(request, "Category updated.")
-            else:
-                messages.error(request, "Could not update category — check the form.")
+            handle_form(
+                request,
+                OfferCategoryForm,
+                instance=category,
+                success="Category updated.",
+                error="Could not update category — check the form.",
+            )
 
         elif form_type == "delete_category":
             category = get_object_or_404(
@@ -61,12 +63,13 @@ def commercials_offers_page(request):
                 category.delete()
 
         elif form_type == "add_offer":
-            offer_form = OfferForm(request.POST, request.FILES)
-            if offer_form.is_valid():
-                offer_form.save()
-                messages.success(request, "Offer created.")
-            else:
-                messages.error(request, "Could not create offer — check the form.")
+            handle_form(
+                request,
+                OfferForm,
+                files=request.FILES,
+                success="Offer created.",
+                error="Could not create offer — check the form.",
+            )
 
         return redirect("commercials_offers_page")
 
@@ -115,25 +118,30 @@ def commercials_offer_edit_page(request, slug):
             return redirect("commercials_offers_page")
 
         elif form_type == "add_plan":
-            plan_form = OfferPlanForm(request.POST)
-            if plan_form.is_valid():
-                plan = plan_form.save(commit=False)
+            def _attach_offer(plan):
                 plan.offer = offer
                 plan.save()
-                messages.success(request, "Plan added.")
-            else:
-                messages.error(request, "Could not add plan — check the form.")
+
+            handle_form(
+                request,
+                OfferPlanForm,
+                success="Plan added.",
+                error="Could not add plan — check the form.",
+                on_save=_attach_offer,
+                commit=False,
+            )
 
         elif form_type == "edit_plan":
             plan = get_object_or_404(
                 OfferPlan, id=request.POST.get("plan_id"), offer=offer
             )
-            plan_form = OfferPlanForm(request.POST, instance=plan)
-            if plan_form.is_valid():
-                plan_form.save()
-                messages.success(request, "Plan updated.")
-            else:
-                messages.error(request, "Could not update plan — check the form.")
+            handle_form(
+                request,
+                OfferPlanForm,
+                instance=plan,
+                success="Plan updated.",
+                error="Could not update plan — check the form.",
+            )
 
         elif form_type == "delete_plan":
             plan = get_object_or_404(
@@ -143,31 +151,40 @@ def commercials_offer_edit_page(request, slug):
             messages.success(request, "Plan deleted.")
 
         elif form_type == "add_quota":
-            quota_form = OfferQuotaForm(request.POST)
-            if quota_form.is_valid():
-                quota = quota_form.save(commit=False)
+            def _attach_and_save_quota(quota):
                 quota.offer = offer
-                try:
-                    quota.save()
-                    messages.success(request, "Quota added.")
-                except Exception:
-                    messages.error(request, "A quota for this wilaya already exists.")
-            else:
-                messages.error(request, "Could not add quota — check the form.")
+                quota.save()
+
+            handle_form(
+                request,
+                OfferQuotaForm,
+                success="Quota added.",
+                error="Could not add quota — check the form.",
+                on_save=_attach_and_save_quota,
+                commit=False,
+                save_error="A quota for this wilaya already exists.",
+            )
 
         elif form_type == "edit_quota":
             quota = get_object_or_404(
                 OfferQuota, id=request.POST.get("quota_id"), offer=offer
             )
-            quota_form = OfferQuotaForm(request.POST, instance=quota)
-            if quota_form.is_valid():
+
+            def _save_and_process_waitlist(saved_quota):
                 with transaction.atomic():
-                    quota_form.save()
-                    quota.refresh_from_db()
-                    quota.process_waitlist()
-                messages.success(request, "Quota updated.")
-            else:
-                messages.error(request, "Could not update quota — check the form.")
+                    saved_quota.save()
+                    saved_quota.refresh_from_db()
+                    saved_quota.process_waitlist()
+
+            handle_form(
+                request,
+                OfferQuotaForm,
+                instance=quota,
+                success="Quota updated.",
+                error="Could not update quota — check the form.",
+                on_save=_save_and_process_waitlist,
+                commit=False,
+            )
 
         elif form_type == "delete_quota":
             quota = get_object_or_404(

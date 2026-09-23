@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.shortcuts import get_object_or_404
 
 # Access-right codes — mirrors Commercial.access_rights choices
 MANAGE_OFFERS = "MO"
@@ -36,3 +37,11 @@ def scope_by_commercial(queryset, commercial, commercial_type, field="commmercia
     if commercial_type == MANAGE_ALL:
         return queryset
     return queryset.filter(**{field: commercial})
+
+
+def get_scoped_or_404(model_qs, commercial, commercial_type, *, field="commmercial", **lookup):
+    """get_object_or_404, restricted to the commercial's own scope."""
+    return get_object_or_404(
+        scope_by_commercial(model_qs, commercial, commercial_type, field=field),
+        **lookup,
+    )
