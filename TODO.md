@@ -1,4 +1,5 @@
 # TODO
+- [ ] impl a under client solution so a client can hand an account a specific store for him to manage
 - [ ] Implement a better workflow for "en attente de reaprovisionement" offer, so the commercial can approve in order of time between waitlist and pendings
 - [ ] Implement a total "en attente de reaprovisionement" offer count for the "offer managment" commercial
 - [ ] Implement a messageri between client and commercial in addition to commercial comments for clients
