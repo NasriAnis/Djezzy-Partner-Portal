@@ -49,7 +49,7 @@
                             <span class="fw-semibold small">
                                 {{ current_commercial.user.get_full_name|default:current_commercial.user.username }}
                             </span>
-                            <span class="badge {% if current_commercial_type == 'MA' %}bg-danger{% elif current_commercial_type == 'MO' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+                            <span class="badge {{ current_commercial_type_badge_color }}">
                                 {{ current_commercial_type_label }}
                             </span>
                             {% if not current_commercial_can_edit %}
@@ -73,7 +73,9 @@
             <main class="content py-4">
                 {% if messages %}
                     {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} py-2">{{ message }}</div>
+                        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} py-2">
+                            {{ message }}
+                        </div>
                     {% endfor %}
                 {% endif %}
                 {% block content %}
