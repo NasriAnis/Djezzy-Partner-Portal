@@ -13,11 +13,14 @@
         {% block extra_css %}{% endblock %}
     </head>
     <body class="bg-dark text-light">
-        <div class="d-flex" style="min-height: 100vh;">
-            <!-- ============ SIDEBAR ============ -->
-            <nav class="djz-sidebar p-3" style="width: 230px; flex-shrink: 0;">
+        <!-- ============ TOP BAR ============ -->
+        <header class="navbar djz-topbar px-3 py-3 sticky-top" style="z-index: 1030;">
+            <div class="d-flex justify-content-between align-items-center w-100"
+                 style="max-width: 1200px;
+                        margin: 0 auto">
+                <!-- Logo -->
                 <a href="{% url 'commercials_dashboard_page' %}"
-                   class="djz-logo text-decoration-none mb-4 d-flex">
+                   class="djz-logo text-decoration-none">
                     <span class="mark">
                         <img src="{% static 'shared/icons/Djezzy_icon.png' %}" alt="Djezzy Logo">
                     </span>
@@ -27,13 +30,27 @@
                     </span>
                 </a>
 
-                {% if current_commercial %}
-                    <div class="djz-commercial-hint mb-4 px-2 py-2 rounded"
-                         style="background: var(--djz-surface-2);">
-                        <div class="fw-semibold small text-truncate">
-                            {{ current_commercial.user.get_full_name|default:current_commercial.user.username }}
-                        </div>
-                        <div class="d-flex align-items-center gap-2 mt-1">
+                <!-- Navigation & User Controls -->
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{% url 'commercials_dashboard_page' %}"
+                       class="nav-text-link {% if request.resolver_match.url_name == 'commercials_dashboard_page' %}fw-bold{% endif %}">
+                       Dashboard
+                    </a>
+                    <a href="{% url 'commercials_offers_page' %}"
+                       class="nav-text-link {% if request.resolver_match.url_name == 'commercials_offers_page' %}fw-bold{% endif %}">
+                       Offers
+                    </a>
+                    <a href="{% url 'commercials_clients_page' %}"
+                       class="nav-text-link {% if request.resolver_match.url_name == 'commercials_clients_page' %}fw-bold{% endif %}">
+                       My Clients
+                    </a>
+
+                    {% if current_commercial %}
+                        <div class="d-flex align-items-center gap-2 px-2 py-1 rounded"
+                             style="background: var(--djz-surface-2);">
+                            <span class="fw-semibold small">
+                                {{ current_commercial.user.get_full_name|default:current_commercial.user.username }}
+                            </span>
                             <span class="badge {% if current_commercial_type == 'MA' %}bg-danger{% elif current_commercial_type == 'MO' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
                                 {{ current_commercial_type_label }}
                             </span>
@@ -41,45 +58,38 @@
                                 <span class="badge bg-warning text-dark">Read-only</span>
                             {% endif %}
                         </div>
-                    </div>
-                {% endif %}
+                    {% endif %}
 
-                <ul class="nav djz-sidenav flex-column gap-1">
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'commercials_dashboard_page' %}active{% endif %}"
-                           href="{% url 'commercials_dashboard_page' %}">
-                            <i class="bi bi-speedometer2 me-2"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'commercials_offers_page' %}active{% endif %}"
-                           href="{% url 'commercials_offers_page' %}">
-                            <i class="bi bi-tag me-2"></i>Offers
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'commercials_clients_page' %}active{% endif %}"
-                           href="{% url 'commercials_clients_page' %}">
-                            <i class="bi bi-people me-2"></i>My Clients
-                        </a>
-                    </li>
-                </ul>
-                <hr class="border-secondary my-4">
-                <form action="{% url 'commercials_logout' %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-danger btn-sm w-100">Log out</button>
-                </form>
-            </nav>
-            <!-- ============ MAIN CONTENT ============ -->
-            <main class="flex-grow-1 p-4">
+                    <form action="{% url 'commercials_logout' %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Log out">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </header>
+
+        <!-- ============ MAIN CONTENT ============ -->
+        <div class="container-fluid" style="max-width: 1200px; margin: 0 auto;">
+            <main class="content py-4">
                 {% if messages %}
                     {% for message in messages %}
                         <div class="alert alert-{{ message.tags }} py-2">{{ message }}</div>
                     {% endfor %}
                 {% endif %}
-                {% block content %}{% endblock %}
+
+                {% block content %}
+                    {# Child templates inject their content here #}
+                {% endblock %}
             </main>
         </div>
+
+        <!-- ============ FOOTER ============ -->
+        <footer class="site-footer text-center py-3 border-top border-secondary">
+            <div class="container">© {% now "Y" %} Djezzy Commercial Portal. All rights reserved.</div>
+        </footer>
+
         <script src="{% static 'shared/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
         {% block extra_js %}{% endblock %}
     </body>
