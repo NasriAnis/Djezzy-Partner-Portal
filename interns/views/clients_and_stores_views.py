@@ -311,97 +311,97 @@ def commercials_block_store(request, store_id):
     return redirect(fallback_url)
 
 
-@login_required(login_url="commercials_login")
-@commercial_required
-@require_POST
-def commercials_fulfill_waitlist_transaction(request, transaction_id):
-    commercial, can_edit, commercial_type = get_commercial_info(request)
-    denial = guard(
-        request,
-        can_edit,
-        commercial_type,
-        MANAGE_CLIENTS,
-        redirect_to=redirect("commercials_clients_page"),
-    )
-    if denial:
-        return denial
+# @login_required(login_url="commercials_login")
+# @commercial_required
+# @require_POST
+# def commercials_fulfill_waitlist_transaction(request, transaction_id):
+#     commercial, can_edit, commercial_type = get_commercial_info(request)
+#     denial = guard(
+#         request,
+#         can_edit,
+#         commercial_type,
+#         MANAGE_CLIENTS,
+#         redirect_to=redirect("commercials_clients_page"),
+#     )
+#     if denial:
+#         return denial
 
-    fallback_url = get_fallback_url(request, "commercials_clients_page")
+#     fallback_url = get_fallback_url(request, "commercials_clients_page")
 
-    with transaction.atomic():
-        tx = get_scoped_or_404(
-            StoreOfferTransaction.objects.select_for_update().filter(
-                status=StoreOfferTransaction.STATUS_WAITLISTED,
-            ),
-            commercial,
-            commercial_type,
-            field="store__commmercial",
-            id=transaction_id,
-        )
+#     with transaction.atomic():
+#         tx = get_scoped_or_404(
+#             StoreOfferTransaction.objects.select_for_update().filter(
+#                 status=StoreOfferTransaction.STATUS_WAITLISTED,
+#             ),
+#             commercial,
+#             commercial_type,
+#             field="store__commmercial",
+#             id=transaction_id,
+#         )
 
-        formatted_wilaya_code = str(tx.store.wilaya).zfill(2)
-        quota = (
-            OfferQuota.objects.select_for_update()
-            .filter(offer=tx.plan.offer, wilaya_code=formatted_wilaya_code)
-            .first()
-        )
+#         formatted_wilaya_code = str(tx.store.wilaya).zfill(2)
+#         quota = (
+#             OfferQuota.objects.select_for_update()
+#             .filter(offer=tx.plan.offer, wilaya_code=formatted_wilaya_code)
+#             .first()
+#         )
 
-        pool_available = quota.remaining_quota if quota else 0
-        store_available = quota.remaining_for_store(tx.store) if quota else 0
+#         pool_available = quota.remaining_quota if quota else 0
+#         store_available = quota.remaining_for_store(tx.store) if quota else 0
 
-        if pool_available <= 0:
-            messages.error(
-                request,
-                f"No quota left for {tx.store.name}'s wilaya — {tx.quantity_bought} units still waiting.",
-            )
-            return redirect(fallback_url)
+#         if pool_available <= 0:
+#             messages.error(
+#                 request,
+#                 f"No quota left for {tx.store.name}'s wilaya — {tx.quantity_bought} units still waiting.",
+#             )
+#             return redirect(fallback_url)
 
-        if store_available <= 0:
-            messages.error(
-                request,
-                f"{tx.store.name} is already at its per-store cap ({quota.max_quantity_per_client} units) for this offer — {tx.quantity_bought} units still waiting.",
-            )
-            return redirect(fallback_url)
+#         if store_available <= 0:
+#             messages.error(
+#                 request,
+#                 f"{tx.store.name} is already at its per-store cap ({quota.max_quantity_per_client} units) for this offer — {tx.quantity_bought} units still waiting.",
+#             )
+#             return redirect(fallback_url)
 
-        approved_qty = min(tx.quantity_bought, pool_available, store_available)
+#         approved_qty = min(tx.quantity_bought, pool_available, store_available)
 
-        stock_obj, created = StoreStock.objects.select_for_update().get_or_create(
-            store=tx.store, plan=tx.plan, defaults={"stock": approved_qty}
-        )
-        if not created:
-            stock_obj.stock = F("stock") + approved_qty
-            stock_obj.save(update_fields=["stock"])
+#         stock_obj, created = StoreStock.objects.select_for_update().get_or_create(
+#             store=tx.store, plan=tx.plan, defaults={"stock": approved_qty}
+#         )
+#         if not created:
+#             stock_obj.stock = F("stock") + approved_qty
+#             stock_obj.save(update_fields=["stock"])
 
-        quota.allocated_quota += approved_qty
-        quota.save(update_fields=["allocated_quota"])
+#         quota.allocated_quota += approved_qty
+#         quota.save(update_fields=["allocated_quota"])
 
-        if tx.quantity_bought <= approved_qty:
-            transition_status(
-                tx,
-                new_status=StoreOfferTransaction.STATUS_APPROVED,
-                request=request,
-                success_msg=f"Approved {approved_qty}x '{tx.plan.label}' for {tx.store.name}.",
-                notify_target=tx.store.client,
-                notify_msg=f"Your transaction for {approved_qty}x '{tx.plan.label}' has been approved!",
-            )
-        else:
-            StoreOfferTransaction.objects.create(
-                store=tx.store,
-                plan=tx.plan,
-                quantity_bought=approved_qty,
-                status=StoreOfferTransaction.STATUS_APPROVED,
-            )
-            tx.quantity_bought -= approved_qty
-            tx.save(update_fields=["quantity_bought"])
+#         if tx.quantity_bought <= approved_qty:
+#             transition_status(
+#                 tx,
+#                 new_status=StoreOfferTransaction.STATUS_APPROVED,
+#                 request=request,
+#                 success_msg=f"Approved {approved_qty}x '{tx.plan.label}' for {tx.store.name}.",
+#                 notify_target=tx.store.client,
+#                 notify_msg=f"Your transaction for {approved_qty}x '{tx.plan.label}' has been approved!",
+#             )
+#         else:
+#             StoreOfferTransaction.objects.create(
+#                 store=tx.store,
+#                 plan=tx.plan,
+#                 quantity_bought=approved_qty,
+#                 status=StoreOfferTransaction.STATUS_APPROVED,
+#             )
+#             tx.quantity_bought -= approved_qty
+#             tx.save(update_fields=["quantity_bought"])
 
-            messages.success(
-                request,
-                f"Approved {approved_qty}x '{tx.plan.label}' for {tx.store.name} ({tx.quantity_bought} units still waiting).",
-            )
-            notify(
-                tx.store.client,
-                f"{approved_qty}x '{tx.plan.label}' from your waitlisted request has been approved! ({tx.quantity_bought} still waiting)",
-                tx.store,
-            )
+#             messages.success(
+#                 request,
+#                 f"Approved {approved_qty}x '{tx.plan.label}' for {tx.store.name} ({tx.quantity_bought} units still waiting).",
+#             )
+#             notify(
+#                 tx.store.client,
+#                 f"{approved_qty}x '{tx.plan.label}' from your waitlisted request has been approved! ({tx.quantity_bought} still waiting)",
+#                 tx.store,
+#             )
 
-    return redirect(fallback_url)
+#     return redirect(fallback_url)
