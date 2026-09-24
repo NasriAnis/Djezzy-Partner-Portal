@@ -243,22 +243,28 @@ def _get_store_waitlist_total(offer, selected_store):
         or 0
     )
 
+def _get_ui_context(store_waitlist_total, store_purchase_room, quota_info):
+    show_buy = False
+    show_draft = False
+    show_waitlist = False
+    already_waitlisted = bool(store_waitlist_total)
 
-def _build_context(offer, offer_plans, user_stores, selected_store, quota_info):
+    if quota_info and quota_info.remaining_quota > 0:
+        if store_purchase_room is not None and store_purchase_room > 0:
+            show_buy = True
+            show_draft = True
+        elif not already_waitlisted:
+            show_waitlist = True
+    else:
+        if not already_waitlisted:
+            show_waitlist = True
+
     return {
-        "offer": offer,
-        "offer_plans": offer_plans,
-        "user_stores": user_stores,
-        "selected_store": selected_store,
-        "quota_info": quota_info,
-        "store_purchase_room": (
-            quota_info.remaining_for_store(selected_store)
-            if quota_info and selected_store
-            else None
-        ),
-        "store_waitlist_total": _get_store_waitlist_total(offer, selected_store),
+        "show_buy": show_buy,
+        "show_draft": show_draft,
+        "show_waitlist": show_waitlist,
+        "already_waitlisted": already_waitlisted,
     }
-
 
 # ---------------------------------------------------------------------------
 # View
@@ -275,5 +281,23 @@ def offer_detail_page(request, offer_slug):
     if request.method == "POST":
         return _handle_purchase_post(request, offer, selected_store)
 
-    context = _build_context(offer, offer_plans, user_stores, selected_store, quota_info)
+    store_waitlist_total = _get_store_waitlist_total(offer, selected_store)
+    store_purchase_room = (
+        quota_info.remaining_for_store(selected_store)
+        if quota_info and selected_store
+        else None
+    )
+
+    ui_context = _get_ui_context(store_waitlist_total, store_purchase_room, quota_info)
+
+    context = {
+        "offer": offer,
+        "offer_plans": offer_plans,
+        "user_stores": user_stores,
+        "selected_store": selected_store,
+        "quota_info": quota_info,
+        "store_purchase_room": store_purchase_room,
+        "store_waitlist_total": store_waitlist_total,
+        "ui_context": ui_context,
+    }
     return render(request, "core/offer_details_page.html", context)
