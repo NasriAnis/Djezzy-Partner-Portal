@@ -167,10 +167,12 @@ def _handle_buy_now_intent(request, offer, plan, selected_store, quantity):
                 store=selected_store,
                 plan=plan,
                 status=StoreOfferTransaction.STATUS_PENDING,
-                defaults={"quantity_bought": quantity},
+                defaults={"quantity_bought": quantity, "from_quota": current_quota},
             )
             if not created:
                 store_tx.quantity_bought += quantity
+                if store_tx.from_quota_id is None:
+                    store_tx.from_quota = current_quota
                 store_tx.save()
 
             current_quota.allocated_quota += quantity

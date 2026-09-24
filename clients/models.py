@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.deletion import PROTECT, SET_NULL
-from core.models import OfferPlan
+from core.models import OfferPlan, OfferQuota
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
@@ -102,6 +102,9 @@ class Store(models.Model):
 class StoreOfferTransaction(models.Model):
     store = models.ForeignKey(
         Store, on_delete=models.CASCADE, related_name="transactions"
+    )
+    from_quota = models.ForeignKey(
+        OfferQuota, on_delete=models.PROTECT, related_name="consumed", null=True, blank=True, default=None
     )
     plan = models.ForeignKey(
         OfferPlan, on_delete=models.PROTECT, related_name="store_transactions"

@@ -148,6 +148,7 @@ class OfferQuota(models.Model):
 
         total = (
             StoreOfferTransaction.objects.filter(
+                from_quota=self,
                 store=store,
                 plan__offer=self.offer,
             )
