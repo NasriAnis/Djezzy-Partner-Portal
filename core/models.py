@@ -204,13 +204,15 @@ class OfferQuota(models.Model):
 
             if tx.quantity_bought <= available:
                 tx.status = StoreOfferTransaction.STATUS_APPROVED
-                tx.save(update_fields=["status"])
+                tx.from_quota = self
+                tx.save(update_fields=["status", "from_quota"])
             else:
                 StoreOfferTransaction.objects.create(
                     store=tx.store,
                     plan=tx.plan,
                     quantity_bought=approved_qty,
                     status=StoreOfferTransaction.STATUS_APPROVED,
+                    from_quota=self,
                 )
                 tx.quantity_bought -= approved_qty
                 tx.save(update_fields=["quantity_bought"])

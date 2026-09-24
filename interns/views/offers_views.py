@@ -154,6 +154,8 @@ def commercials_offer_edit_page(request, slug):
             def _attach_and_save_quota(quota):
                 quota.offer = offer
                 quota.save()
+                quota.refresh_from_db()
+                quota.process_waitlist()
 
             handle_form(
                 request,
