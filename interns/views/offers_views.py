@@ -37,18 +37,6 @@ def commercials_offers_page(request):
                 error="Could not create category — check the form.",
             )
 
-        elif form_type == "edit_category":
-            category = get_object_or_404(
-                OfferCategory, id=request.POST.get("category_id")
-            )
-            handle_form(
-                request,
-                OfferCategoryForm,
-                instance=category,
-                success="Category updated.",
-                error="Could not update category — check the form.",
-            )
-
         elif form_type == "delete_category":
             category = get_object_or_404(
                 OfferCategory, id=request.POST.get("category_id")
