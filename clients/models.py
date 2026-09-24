@@ -103,8 +103,8 @@ class StoreOfferTransaction(models.Model):
     store = models.ForeignKey(
         Store, on_delete=models.CASCADE, related_name="transactions"
     )
-    from_quota = models.ForeignKey(
-        OfferQuota, on_delete=models.PROTECT, related_name="consumed", null=True, blank=True, default=None
+    from_quota = models.ForeignKey( # this will be later foxed with OfferQuota inactive parameter
+        OfferQuota, on_delete=models.SET_NULL, related_name="consumed", null=True, blank=True, default=None
     )
     plan = models.ForeignKey(
         OfferPlan, on_delete=models.PROTECT, related_name="store_transactions"
